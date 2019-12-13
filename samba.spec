@@ -50,7 +50,7 @@
 
 Name:           samba
 Version:        4.9.1
-Release:        3
+Release:        4
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
 URL:            http://www.samba.org/
@@ -1004,21 +1004,15 @@ fi
 %{_bindir}/mvxattr
 %{_bindir}/nmblookup
 %{_bindir}/oLschema2ldif
-%{_bindir}/regdiff
-%{_bindir}/regpatch
-%{_bindir}/regshell
-%{_bindir}/regtree
+%{_bindir}/reg*
 %{_bindir}/rpcclient
 %{_bindir}/samba-regedit
 %{_bindir}/sharesec
-%{_bindir}/smbcacls
-%{_bindir}/smbclient
-%{_bindir}/smbcquotas
-%{_bindir}/smbget
-%{_bindir}/smbprint
-%{_bindir}/smbspool
-%{_bindir}/smbtar
-%{_bindir}/smbtree
+%{_bindir}/smb*
+%exclude %{_bindir}/smbcontrol
+%exclude %{_bindir}/smbpasswd
+%exclude %{_bindir}/smbstatus
+%exclude %{_bindir}/smbtorture
 %dir %{_libexecdir}/samba
 %ghost %{_libexecdir}/samba/cups_backend_smb
 
@@ -1174,12 +1168,7 @@ fi
 %if %with_dc
 %{_unitdir}/samba.service
 %{_bindir}/samba-tool
-%{_sbindir}/samba
-%{_sbindir}/samba_kcc
-%{_sbindir}/samba_dnsupdate
-%{_sbindir}/samba-gpupdate
-%{_sbindir}/samba_spnupdate
-%{_sbindir}/samba_upgradedns
+%{_sbindir}/samba*
 
 %{_libdir}/krb5/plugins/kdb/samba.so
 
@@ -2397,10 +2386,7 @@ fi
 
 %dir %{_sysconfdir}/ctdb
 %config(noreplace) %{_sysconfdir}/ctdb/ctdb.conf
-%config(noreplace) %{_sysconfdir}/ctdb/notify.sh
-%config(noreplace) %{_sysconfdir}/ctdb/debug-hung-script.sh
-%config(noreplace) %{_sysconfdir}/ctdb/ctdb-crash-cleanup.sh
-%config(noreplace) %{_sysconfdir}/ctdb/debug_locks.sh
+%config(noreplace) %{_sysconfdir}/ctdb/*.sh
 
 %{_sysconfdir}/ctdb/functions
 %{_sysconfdir}/ctdb/nfs-linux-kernel-callout
@@ -2528,63 +2514,14 @@ fi
 %dir %{_datadir}/ctdb/tests
 
 %dir %{_datadir}/ctdb/tests/complex
-%{_datadir}/ctdb/tests/complex/README
-%{_datadir}/ctdb/tests/complex/00_ctdb_init.sh
-%{_datadir}/ctdb/tests/complex/11_ctdb_delip_removes_ip.sh
-%{_datadir}/ctdb/tests/complex/18_ctdb_reloadips.sh
-%{_datadir}/ctdb/tests/complex/30_nfs_tickle_killtcp.sh
-%{_datadir}/ctdb/tests/complex/31_nfs_tickle.sh
-%{_datadir}/ctdb/tests/complex/32_cifs_tickle.sh
-%{_datadir}/ctdb/tests/complex/33_gratuitous_arp.sh
-%{_datadir}/ctdb/tests/complex/34_nfs_tickle_restart.sh
-%{_datadir}/ctdb/tests/complex/36_smb_reset_server.sh
-%{_datadir}/ctdb/tests/complex/37_nfs_reset_server.sh
-%{_datadir}/ctdb/tests/complex/41_failover_ping_discrete.sh
-%{_datadir}/ctdb/tests/complex/42_failover_ssh_hostname.sh
-%{_datadir}/ctdb/tests/complex/43_failover_nfs_basic.sh
-%{_datadir}/ctdb/tests/complex/44_failover_nfs_oneway.sh
-%{_datadir}/ctdb/tests/complex/45_failover_nfs_kill.sh
-%{_datadir}/ctdb/tests/complex/60_rogueip_releaseip.sh
-%{_datadir}/ctdb/tests/complex/61_rogueip_takeip.sh
+%{_datadir}/ctdb/tests/complex/*
+%exclude %{_datadir}/ctdb/tests/complex/scripts
 
 %dir %{_datadir}/ctdb/tests/complex/scripts
 %{_datadir}/ctdb/tests/complex/scripts/local.bash
 
 %dir %{_datadir}/ctdb/tests/cunit
-%{_datadir}/ctdb/tests/cunit/cmdline_test_001.sh
-%{_datadir}/ctdb/tests/cunit/comm_test_001.sh
-%{_datadir}/ctdb/tests/cunit/comm_test_002.sh
-%{_datadir}/ctdb/tests/cunit/conf_test_001.sh
-%{_datadir}/ctdb/tests/cunit/config_test_001.sh
-%{_datadir}/ctdb/tests/cunit/config_test_002.sh
-%{_datadir}/ctdb/tests/cunit/config_test_003.sh
-%{_datadir}/ctdb/tests/cunit/config_test_004.sh
-%{_datadir}/ctdb/tests/cunit/config_test_005.sh
-%{_datadir}/ctdb/tests/cunit/config_test_006.sh
-%{_datadir}/ctdb/tests/cunit/config_test_007.sh
-%{_datadir}/ctdb/tests/cunit/db_hash_test_001.sh
-%{_datadir}/ctdb/tests/cunit/event_protocol_test_001.sh
-%{_datadir}/ctdb/tests/cunit/event_script_test_001.sh
-%{_datadir}/ctdb/tests/cunit/hash_count_test_001.sh
-%{_datadir}/ctdb/tests/cunit/line_test_001.sh
-%{_datadir}/ctdb/tests/cunit/path_tests_001.sh
-%{_datadir}/ctdb/tests/cunit/pidfile_test_001.sh
-%{_datadir}/ctdb/tests/cunit/pkt_read_001.sh
-%{_datadir}/ctdb/tests/cunit/pkt_write_001.sh
-%{_datadir}/ctdb/tests/cunit/porting_tests_001.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_001.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_002.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_012.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_101.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_111.sh
-%{_datadir}/ctdb/tests/cunit/protocol_test_201.sh
-%{_datadir}/ctdb/tests/cunit/rb_test_001.sh
-%{_datadir}/ctdb/tests/cunit/reqid_test_001.sh
-%{_datadir}/ctdb/tests/cunit/run_event_001.sh
-%{_datadir}/ctdb/tests/cunit/run_proc_001.sh
-%{_datadir}/ctdb/tests/cunit/sock_daemon_test_001.sh
-%{_datadir}/ctdb/tests/cunit/sock_io_test_001.sh
-%{_datadir}/ctdb/tests/cunit/srvid_test_001.sh
+%{_datadir}/ctdb/tests/cunit/*
 
 %dir %{_datadir}/ctdb/tests/eventd
 %{_datadir}/ctdb/tests/eventd/README
@@ -3251,59 +3188,11 @@ fi
 %endif
 
 %files help
-%{_mandir}/man1/ctdb.1.gz
-%{_mandir}/man1/ctdb_diagnostics.1.gz
-%{_mandir}/man1/ctdbd.1.gz
-%{_mandir}/man1/onnode.1.gz
-%{_mandir}/man1/ltdbtool.1.gz
-%{_mandir}/man1/ping_pong.1.gz
-%{_mandir}/man1/ctdbd_wrapper.1.gz
-%{_mandir}/man1/gentest.1*
-%{_mandir}/man1/locktest.1*
-%{_mandir}/man1/masktest.1*
-%{_mandir}/man1/ndrdump.1*
-%{_mandir}/man1/smbtorture.1*
-%{_mandir}/man1/vfstest.1*
-%{_mandir}/man1/ntlm_auth.1.gz
-%{_mandir}/man1/wbinfo.1*
-%{_mandir}/man1/pidl*
-%{_mandir}/man1/dbwrap_tool.1*
-%{_mandir}/man1/nmblookup.1*
-%{_mandir}/man1/oLschema2ldif.1*
-%{_mandir}/man1/regdiff.1*
-%{_mandir}/man1/regpatch.1*
-%{_mandir}/man1/regshell.1*
-%{_mandir}/man1/regtree.1*
-%{_mandir}/man1/findsmb.1*
-%{_mandir}/man1/log2pcap.1*
-%{_mandir}/man1/mvxattr.1*
-%{_mandir}/man1/rpcclient.1*
-%{_mandir}/man1/sharesec.1*
-%{_mandir}/man1/smbcacls.1*
-%{_mandir}/man1/smbclient.1*
-%{_mandir}/man1/smbcquotas.1*
-%{_mandir}/man1/smbget.1*
-%{_mandir}/man1/smbtar.1*
-%{_mandir}/man1/smbtree.1*
-%{_mandir}/man1/smbstatus.1*
-%{_mandir}/man1/profiles.1*
-%{_mandir}/man1/smbcontrol.1*
-%{_mandir}/man1/testparm.1*
+%{_mandir}/man1/*
 %{_mandir}/man3/Parse::Pidl*
-%{_mandir}/man5/ctdb.conf.5.gz
-%{_mandir}/man5/ctdb-script.options.5.gz
-%{_mandir}/man5/ctdb.sysconfig.5.gz
-%{_mandir}/man5/smbgetrc.5*
-%{_mandir}/man5/pam_winbind.conf.5*
-%{_mandir}/man5/lmhosts.5*
-%{_mandir}/man5/smb.conf.5*
-%{_mandir}/man5/smbpasswd.5*
-%{_mandir}/man7/ctdb.7.gz
-%{_mandir}/man7/ctdb-tunables.7.gz
-%{_mandir}/man7/ctdb-statistics.7.gz
-%{_mandir}/man7/traffic_learner.7.*
-%{_mandir}/man7/traffic_replay.7.*
-%{_mandir}/man7/samba.7*
+%{_mandir}/man5/*
+%{_mandir}/man7/*
+%exclude %{_mandir}/man7/libsmbclient.7.gz
 %{_mandir}/man8/winbindd.8*
 %{_mandir}/man8/idmap_*.8*
 %{_mandir}/man8/winbind_krb5_localauth.8*
@@ -3316,15 +3205,9 @@ fi
 %{_mandir}/man8/eventlogadm.8*
 %{_mandir}/man8/smbd.8*
 %{_mandir}/man8/nmbd.8*
-%{_mandir}/man8/vfs_acl_tdb.8*
-%{_mandir}/man8/vfs_acl_xattr.8*
-%{_mandir}/man8/vfs_aio_fork.8*
-%{_mandir}/man8/vfs_aio_pthread.8*
-%{_mandir}/man8/vfs_audit.8*
+%{_mandir}/man8/vfs_a*
 %{_mandir}/man8/vfs_btrfs.8*
-%{_mandir}/man8/vfs_cacheprime.8*
-%{_mandir}/man8/vfs_cap.8*
-%{_mandir}/man8/vfs_catia.8*
+%{_mandir}/man8/vfs_ca*
 %{_mandir}/man8/vfs_commit.8*
 %{_mandir}/man8/vfs_crossrename.8*
 %{_mandir}/man8/vfs_default_quota.8*
@@ -3363,5 +3246,11 @@ fi
 %{_mandir}/man8/smbpasswd.8*
 
 %changelog
+* Thu Nov 21 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-4
+- Type: enhancement
+- ID:   NA
+- SUG:  NA
+- DESC:modify spec file to solve fossid
+
 * Mon Sep 23 2019 huzhiyu<huzhiyu1@huawei.com> - 4.9.1-3
 - Package init
