@@ -50,7 +50,7 @@
 
 Name:           samba
 Version:        4.9.1
-Release:        4
+Release:        7
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
 URL:            http://www.samba.org/
@@ -80,6 +80,41 @@ Patch6011:      CVE-2018-16841-1.patch
 Patch6012:      CVE-2018-16841-2.patch
 Patch6013:      CVE-2019-12435-1.patch
 Patch6014:      CVE-2019-12435-2.patch
+Patch6015:      CVE-2018-16852-1.patch
+Patch6016:      CVE-2018-16852-2.patch
+Patch6017:      CVE-2018-16852-3.patch
+Patch6018:      CVE-2018-16857-1.patch
+Patch6019:      CVE-2018-16857-2.patch
+Patch6020:      CVE-2018-16857-3.patch
+Patch6021:      CVE-2018-16857-4.patch
+Patch6022:      CVE-2018-16857-5.patch
+Patch6023:      CVE-2018-16857-6.patch
+Patch6024:      CVE-2018-16857-7.patch
+Patch6025:      CVE-2018-16857-8.patch
+Patch6026:      CVE-2018-16857-9.patch
+Patch6027:      CVE-2019-10197-1.patch
+Patch6028:      CVE-2019-10197-2.patch
+Patch6029:      CVE-2019-10197-3.patch
+Patch6030:      CVE-2019-10197-4.patch
+Patch6031:      CVE-2019-10197-5.patch
+Patch6032:      CVE-2019-10197-6.patch
+Patch6033:      0001-CVE-2019-14847.patch
+Patch6034:      0002-CVE-2019-14847.patch
+Patch6035:      0003-CVE-2019-14847.patch
+Patch6036:      0001-CVE-2019-14833.patch
+Patch6037:      0002-CVE-2019-14833.patch
+Patch6038:      0001-CVE-2019-10218.patch
+Patch6039:      0002-CVE-2019-10218.patch
+Patch6040:      0001-CVE-2019-3824.patch
+Patch6041:      0002-CVE-2019-3824.patch
+Patch6042:      0003-CVE-2019-3824.patch
+Patch6043:      0004-CVE-2019-3824.patch
+Patch6044:      0005-CVE-2019-3824.patch
+Patch6045:      0006-CVE-2019-3824.patch
+Patch6046:      0007-CVE-2019-3824.patch
+Patch6047:      CVE-2019-14861.patch
+Patch6048:      CVE-2019-14870.patch
+Patch6049:      CVE-2018-16860.patch
 
 BuildRequires:  avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gpgme-devel
 BuildRequires:  jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel
@@ -580,29 +615,34 @@ then
     exit -1
 fi
 
-touch %{buildroot}%{_libexecdir}/samba/cups_backend_smb
+pushd %{buildroot}
+touch .%{_libexecdir}/samba/cups_backend_smb
 
-install -dm755 %{buildroot}%{_sysconfdir}/logrotate.d
-install -m644 %{SOURCE3} %{buildroot}%{_sysconfdir}/logrotate.d/samba
+install -dm755 .%{_sysconfdir}/logrotate.d
+install -m644 %{SOURCE3} .%{_sysconfdir}/logrotate.d/samba
 
-install -m644 %{SOURCE4} %{buildroot}%{_sysconfdir}/samba/smb.conf
-install -m644 %{SOURCE5} %{buildroot}%{_sysconfdir}/samba/smb.conf.example
+install -m644 %{SOURCE4} .%{_sysconfdir}/samba/smb.conf
+install -m644 %{SOURCE5} .%{_sysconfdir}/samba/smb.conf.example
 
-install -dm755 %{buildroot}%{_sysconfdir}/security
-install -m644 %{SOURCE6} %{buildroot}%{_sysconfdir}/security/pam_winbind.conf
+install -dm755 .%{_sysconfdir}/security
+install -m644 %{SOURCE6} .%{_sysconfdir}/security/pam_winbind.conf
 
-install -dm755 %{buildroot}%{_sysconfdir}/pam.d
-install -m644 %{SOURCE7} %{buildroot}%{_sysconfdir}/pam.d/samba
+install -dm755 .%{_sysconfdir}/pam.d
+install -m644 %{SOURCE7} .%{_sysconfdir}/pam.d/samba
 
-echo 127.0.0.1 localhost > %{buildroot}%{_sysconfdir}/samba/lmhosts
+echo 127.0.0.1 localhost > .%{_sysconfdir}/samba/lmhosts
 
-install -dm755 %{buildroot}%{_sysconfdir}/openldap/schema
-install -m644 examples/LDAP/samba.schema %{buildroot}%{_sysconfdir}/openldap/schema/samba.schema
+install -dm755 .%{_sysconfdir}/openldap/schema
+install -m644 %{_builddir}/%{name}-%{version}/examples/LDAP/samba.schema \
+        %{buildroot}%{_sysconfdir}/openldap/schema/samba.schema
 
-install -m744 packaging/printing/smbprint %{buildroot}%{_bindir}/smbprint
+install -m744 %{_builddir}/%{name}-%{version}/packaging/printing/smbprint \
+        %{buildroot}%{_bindir}/smbprint
 
 install -dm755 %{buildroot}%{_tmpfilesdir}
-install -m644 packaging/systemd/samba.conf.tmp %{buildroot}%{_tmpfilesdir}/samba.conf
+install -m644 %{_builddir}/%{name}-%{version}/packaging/systemd/samba.conf.tmp \
+        %{buildroot}%{_tmpfilesdir}/samba.conf
+popd
 
 echo "d /run/samba  755 root root" >> %{buildroot}%{_tmpfilesdir}/samba.conf
 %if %with_clustering_support
@@ -915,9 +955,9 @@ fi
 %{_libdir}/%{name}/libsmbpasswdparser-samba4.so
 %{_libdir}/%{name}/libxattr-tdb-samba4.so
 %{_bindir}/smbstatus
-%{_sbindir}/eventlogadm
-%{_sbindir}/nmbd
 %{_sbindir}/smbd
+%{_sbindir}/nmbd
+%{_sbindir}/eventlogadm
 %if %{with_dc}
 %{_libdir}/samba/vfs/dfs_samba4.so
 %{_libdir}/samba/libdfs-server-ad-samba4.so
@@ -998,6 +1038,7 @@ fi
 %{_libdir}/libsmbldap.so.*
 %{_libdir}/libtevent-util.so.*
 %{_libdir}/libdcerpc.so.*
+
 %{_bindir}/cifsdd
 %{_bindir}/dbwrap_tool
 %{_bindir}/findsmb
@@ -1013,6 +1054,7 @@ fi
 %exclude %{_bindir}/smbpasswd
 %exclude %{_bindir}/smbstatus
 %exclude %{_bindir}/smbtorture
+
 %dir %{_libexecdir}/samba
 %ghost %{_libexecdir}/samba/cups_backend_smb
 
@@ -1113,8 +1155,8 @@ fi
 %dir /var/lib/samba/lock
 %attr(755,root,root) %dir %{_sysconfdir}/samba
 %config(noreplace) %{_sysconfdir}/samba/smb.conf
-%{_sysconfdir}/samba/smb.conf.example
 %config(noreplace) %{_sysconfdir}/samba/lmhosts
+%{_sysconfdir}/samba/smb.conf.example
 %config(noreplace) %{_sysconfdir}/sysconfig/samba
 %{_libdir}/samba/libpopt-samba3-samba4.so
 %if %{with_intel_aes_accel}
@@ -2383,14 +2425,13 @@ fi
 %doc ctdb/README
 %doc ctdb/doc/examples
 %config(noreplace, missingok) %{_sysconfdir}/sysconfig/ctdb
-
 %dir %{_sysconfdir}/ctdb
-%config(noreplace) %{_sysconfdir}/ctdb/ctdb.conf
 %config(noreplace) %{_sysconfdir}/ctdb/*.sh
+%config(noreplace) %{_sysconfdir}/ctdb/ctdb.conf
 
 %{_sysconfdir}/ctdb/functions
-%{_sysconfdir}/ctdb/nfs-linux-kernel-callout
 %{_sysconfdir}/ctdb/statd-callout
+%{_sysconfdir}/ctdb/nfs-linux-kernel-callout
 %config %{_sysconfdir}/sudoers.d/ctdb
 
 %dir %{_sysconfdir}/ctdb/events
@@ -2399,40 +2440,22 @@ fi
 
 %dir %{_sysconfdir}/ctdb/nfs-checks.d
 %{_sysconfdir}/ctdb/nfs-checks.d/README
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/00.portmapper.check
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/10.status.check
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/20.nfs.check
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/30.nlockmgr.check
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/40.mountd.check
-%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/50.rquotad.check
+%config(noreplace) %{_sysconfdir}/ctdb/nfs-checks.d/*.check
 
+%{_bindir}/ctdb
+%{_bindir}/ctdb_diagnostics
+%{_bindir}/ltdbtool
+%{_bindir}/onnode
+%{_bindir}/ping_pong
 %{_sbindir}/ctdbd
 %{_sbindir}/ctdbd_wrapper
-%{_bindir}/ctdb
-%{_bindir}/ping_pong
-%{_bindir}/ltdbtool
-%{_bindir}/ctdb_diagnostics
-%{_bindir}/onnode
 
 %dir %{_libexecdir}/ctdb
-%{_libexecdir}/ctdb/ctdb-config
-%{_libexecdir}/ctdb/ctdb-event
-%{_libexecdir}/ctdb/ctdb-eventd
-%{_libexecdir}/ctdb/ctdb_killtcp
-%{_libexecdir}/ctdb/ctdb_lock_helper
-%{_libexecdir}/ctdb/ctdb_lvs
-%{_libexecdir}/ctdb/ctdb_mutex_fcntl_helper
-%{_libexecdir}/ctdb/ctdb_natgw
-%{_libexecdir}/ctdb/ctdb-path
-%{_libexecdir}/ctdb/ctdb_recovery_helper
-%{_libexecdir}/ctdb/ctdb_takeover_helper
+%{_libexecdir}/ctdb/ctdb*
 %{_libexecdir}/ctdb/smnotify
 
 %dir %{_localstatedir}/lib/ctdb/
-
-
 %{_tmpfilesdir}/ctdb.conf
-
 %{_unitdir}/ctdb.service
 
 %dir %{_datadir}/ctdb
@@ -2463,56 +2486,9 @@ fi
 
 %dir %{_libexecdir}/ctdb
 %dir %{_libexecdir}/ctdb/tests
-%{_libexecdir}/ctdb/tests/cmdline_test
-%{_libexecdir}/ctdb/tests/comm_client_test
-%{_libexecdir}/ctdb/tests/comm_server_test
-%{_libexecdir}/ctdb/tests/comm_test
-%{_libexecdir}/ctdb/tests/conf_test
-%{_libexecdir}/ctdb/tests/ctdb_packet_parse
-%{_libexecdir}/ctdb/tests/ctdb_takeover_tests
-%{_libexecdir}/ctdb/tests/db_hash_test
-%{_libexecdir}/ctdb/tests/dummy_client
-%{_libexecdir}/ctdb/tests/errcode
-%{_libexecdir}/ctdb/tests/event_protocol_test
-%{_libexecdir}/ctdb/tests/event_script_test
-%{_libexecdir}/ctdb/tests/fake_ctdbd
-%{_libexecdir}/ctdb/tests/fetch_loop
-%{_libexecdir}/ctdb/tests/fetch_loop_key
-%{_libexecdir}/ctdb/tests/fetch_readonly
-%{_libexecdir}/ctdb/tests/fetch_readonly_loop
-%{_libexecdir}/ctdb/tests/fetch_ring
-%{_libexecdir}/ctdb/tests/g_lock_loop
-%{_libexecdir}/ctdb/tests/hash_count_test
-%{_libexecdir}/ctdb/tests/line_test
-%{_libexecdir}/ctdb/tests/lock_tdb
-%{_libexecdir}/ctdb/tests/message_ring
-%{_libexecdir}/ctdb/tests/pidfile_test
-%{_libexecdir}/ctdb/tests/pkt_read_test
-%{_libexecdir}/ctdb/tests/pkt_write_test
-%{_libexecdir}/ctdb/tests/porting_tests
-%{_libexecdir}/ctdb/tests/protocol_basic_test
-%{_libexecdir}/ctdb/tests/protocol_ctdb_compat_test
-%{_libexecdir}/ctdb/tests/protocol_ctdb_test
-%{_libexecdir}/ctdb/tests/protocol_types_compat_test
-%{_libexecdir}/ctdb/tests/protocol_types_test
-%{_libexecdir}/ctdb/tests/protocol_util_test
-%{_libexecdir}/ctdb/tests/rb_test
-%{_libexecdir}/ctdb/tests/reqid_test
-%{_libexecdir}/ctdb/tests/run_event_test
-%{_libexecdir}/ctdb/tests/run_proc_test
-%{_libexecdir}/ctdb/tests/sigcode
-%{_libexecdir}/ctdb/tests/sock_daemon_test
-%{_libexecdir}/ctdb/tests/sock_io_test
-%{_libexecdir}/ctdb/tests/srvid_test
-%{_libexecdir}/ctdb/tests/test_mutex_raw
-%{_libexecdir}/ctdb/tests/transaction_loop
-%{_libexecdir}/ctdb/tests/tunnel_cmd
-%{_libexecdir}/ctdb/tests/tunnel_test
-%{_libexecdir}/ctdb/tests/update_record
-%{_libexecdir}/ctdb/tests/update_record_persistent
+%{_libexecdir}/ctdb/tests/*
 
 %dir %{_datadir}/ctdb/tests
-
 %dir %{_datadir}/ctdb/tests/complex
 %{_datadir}/ctdb/tests/complex/*
 %exclude %{_datadir}/ctdb/tests/complex/scripts
@@ -3246,11 +3222,29 @@ fi
 %{_mandir}/man8/smbpasswd.8*
 
 %changelog
+* Sat Dec 21 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-7
+- Type:bugfix
+- Id:NA
+- SUG:NA
+- DESC:fix CVE
+
+* Thu Dec 19 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-6
+- Type:bugfix
+- Id:NA
+- SUG:NA
+- DESC:modify the changelog message
+
+* Tue Dec 3 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-5
+- Type: NA
+- ID:   NA
+- SUG:  NA
+- DESC: optimize the spec file
+
 * Thu Nov 21 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-4
 - Type: enhancement
 - ID:   NA
 - SUG:  NA
-- DESC:modify spec file to solve fossid
+- DESC:modify spec file 
 
 * Mon Sep 23 2019 huzhiyu<huzhiyu1@huawei.com> - 4.9.1-3
 - Package init
