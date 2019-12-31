@@ -50,12 +50,12 @@
 
 Name:           samba
 Version:        4.9.1
-Release:        7
+Release:        8
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
 URL:            http://www.samba.org/
-Source0:        https://ftp.samba.org/pub/samba/%{name}-%{version}.tar.xz
-Source1:        https://ftp.samba.org/pub/samba/%{name}-%{version}.tar.asc
+Source0:        https://download.samba.org/pub/samba/stable/%{name}-%{version}.tar.gz
+Source1:        https://download.samba.org/pub/samba/stable/%{name}-%{version}.tar.asc
 Source2:        gpgkey-52FBC0B86D954B0843324CDC6F33915B6568B7EA.gpg
 Source3:        samba.log
 Source4:        smb.conf.vendor
@@ -472,7 +472,7 @@ Summary:        Help package for %{name}
 This package contains some man help files for %{name}.
 
 %prep
-xzcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
+zcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
 %autosetup -n %{name}-%{version} -p1
 
 %build
@@ -3222,6 +3222,12 @@ fi
 %{_mandir}/man8/smbpasswd.8*
 
 %changelog
+* Tue Dec 31 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-8
+- Type:NA
+- Id:NA
+- SUG:NA
+- DESC:update tarball
+
 * Sat Dec 21 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-7
 - Type:bugfix
 - Id:NA
