@@ -50,7 +50,7 @@
 
 Name:           samba
 Version:        4.9.1
-Release:        8
+Release:        9
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
 URL:            http://www.samba.org/
@@ -62,8 +62,6 @@ Source4:        smb.conf.vendor
 Source5:        smb.conf.example
 Source6:        pam_winbind.conf
 Source7:        samba.pamd
-Source8:        README.dc
-Source9:        README.downgrade
 
 Patch6000:      samba-4.9.0rc5-stack-protector.patch
 Patch6001:      CVE-2018-14629.patch
@@ -659,13 +657,6 @@ install -dm755 %{buildroot}%{_sysconfdir}/ctdb
 install -m644 ctdb/config/ctdb.conf %{buildroot}%{_sysconfdir}/ctdb/ctdb.conf
 %endif
 
-install -m644 %{SOURCE9} packaging/README.downgrade
-
-%if ! %with_dc
-install -m644 %{SOURCE8} packaging/README.dc
-install -m644 %{SOURCE8} packaging/README.dc-libs
-%endif
-
 %if %with_clustering_support
 install -m644 ctdb/config/ctdb.service %{buildroot}%{_unitdir}
 %endif
@@ -941,7 +932,6 @@ fi
 %doc README WHATSNEW.txt
 %doc examples/autofs examples/LDAP examples/misc
 %doc examples/printer-accounting examples/printing
-%doc packaging/README.downgrade
 %{_libdir}/libdcerpc-samr.so.*
 %{_libdir}/%{name}/libMESSAGING-samba4.so
 %{_libdir}/%{name}/libMESSAGING-SEND-samba4.so
@@ -1272,8 +1262,6 @@ fi
 %{_mandir}/man8/samba.8*
 %{_mandir}/man8/samba-gpupdate.8*
 %{_mandir}/man8/samba-tool.8*
-%else # with_dc
-%doc packaging/README.dc
 %endif # with_dc
 
 %if %with_dc
@@ -3222,6 +3210,9 @@ fi
 %{_mandir}/man8/smbpasswd.8*
 
 %changelog
+* Fri Jan 10 2020 openEuler Buildteam <buildteam@openeuler.org> - 4.9.8-9
+- clean unused file
+
 * Tue Dec 31 2019 openEuler Buildteam <buildteam@openeuler.org> - 4.9.1-8
 - Type:NA
 - Id:NA
