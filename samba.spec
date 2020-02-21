@@ -50,13 +50,13 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        1
+Release:        2
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
 URL:            https://www.samba.org
 
-Source0:        https://download.samba.org/pub/samba/stable/%{name}-%{version}.tar.xz
+Source0:        https://download.samba.org/pub/samba/stable/%{name}-%{version}.tar.gz
 Source1:        https://download.samba.org/pub/samba/stable/%{name}-%{version}.tar.asc
 Source2:        gpgkey-52FBC0B86D954B0843324CDC6F33915B6568B7EA.gpg
 Source3:        samba.logrotate
@@ -460,7 +460,7 @@ This package contains some man help files for %{name}.
 
 
 %prep
-xzcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
+zcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
 %autosetup -n %{name}-%{version} -p1
 
 %build
@@ -3057,6 +3057,9 @@ fi
 %{_mandir}/man8/*
 
 %changelog
+* Fri Feb 21 2020 openEuler Buildteam <buildteam@openeuler.org> - 4.11.6-2
+- use zcat instead of xzcat
+
 * Mon Feb 10 2020 openEuler Buildteam <buildteam@openeuler.org> - 4.11.6-1
 - Update to Samba 4.11.6
 
