@@ -6,7 +6,6 @@
 %define tevent_version 0.10.0
 %define ldb_version 2.0.8
 
-
 %undefine _strict_symbol_defs_build
 
 %global with_libsmbclient 1
@@ -50,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        2
+Release:        3
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -114,14 +113,26 @@ Requires:       libwbclient = %{samba_depver}
 %endif
 
 Provides:       samba4 = %{samba_depver} samba-doc = %{samba_depver} samba-domainjoin-gui = %{samba_depver}
-Provides:       samba-swat = %{samba_depver} samba4-swat = %{samba_depver} %{name}-libs = %{samba_depver}
-Provides:       samba4-libs = %{samba_depver}
+Provides:       samba-swat = %{samba_depver} samba4-swat = %{samba_depver}
 Obsoletes:      samba4 < %{samba_depver} samba-doc < %{samba_depver} samba-domainjoin-gui < %{samba_depver}
-Obsoletes:      samba-swat < %{samba_depver} samba4-swat < %{samba_depver} %{name}-libs < %{samba_depver}
-Obsoletes:      samba4-libs < %{samba_depver}
+Obsoletes:      samba-swat < %{samba_depver} samba4-swat < %{samba_depver}
 
 %description
 Samba is a suite of programs for Linux and Unix to interoperate with Windows.
+
+%package libs
+Summary:        Libraries for %{name}
+Requires:       %{name}-common-libs = %{samba_depver}
+Requires:       %{name}-client-libs = %{samba_depver}
+%if %with_libwbclient
+Requires:       libwbclient = %{samba_depver}
+%endif
+
+Provides:       samba4-libs = %{samba_depver}
+Obsoletes:      samba4-libs < %{samba_depver}
+
+%description libs
+Librariesfor%{name}.
 
 %package client
 Summary:        Client package for %{name}
@@ -166,7 +177,8 @@ and server.
 
 %package common-tools
 Summary:        Tools package for %{name}
-Requires:       %{name}-common = %{samba_depver} %{name}-client = %{samba_depver} %{name} = %{samba_depver}
+Requires:       %{name}-common = %{samba_depver} %{name}-client = %{samba_depver}
+Requires:       %{name}-libs = %{samba_depver}
 %if %with_libwbclient
 Requires:       libwbclient = %{samba_depver}
 %endif
@@ -179,6 +191,7 @@ This package contains some tools for %{name} server and client.
 Summary:        Domain Controller package for %{name}
 Requires: 		%{name} = %{samba_depver} %{name}-winbind = %{samba_depver}
 Requires:       %{name}-common = %{samba_depver} tdb-tools
+Requires: 		%{name}-libs = %{samba_depver}
 Requires: 		lmdb ldb-tools
 
 %requires_eq libldb
@@ -221,6 +234,7 @@ This package contains some header files and library files for %{name}.
 %package vfs-cephfs
 Summary:        The VFS module for Ceph distributed storage system
 Requires:       %{name} = %{samba_depver}
+Requires:       %{name}-libs = %{samba_depver}
 
 
 %description vfs-cephfs
@@ -233,7 +247,8 @@ This is the samba VFS module for Ceph distributed storage system integration.
 %package vfs-glusterfs
 Summary: 		Samba VFS module for GlusterFS
 Requires:       glusterfs-api >= 3.4.0.16 glusterfs >= 3.4.0.16
-Requires:       %{name} = %{samba_depver} %{name}-client = %{samba_depver}
+Requires:       %{name} = %{samba_depver} %{name}-libs = %{samba_depver}
+Requires:       %{name}-common = %{samba_depver} %{name}-client = %{samba_depver}
 
 %if %with_libwbclient
 Requires: libwbclient = %{samba_depver}
@@ -300,6 +315,7 @@ This package provides developer tools for the wbclient library.
 Summary:        Python3 library package for %{name}
 Requires:       %{name} = %{samba_depver} %{name}-client = %{samba_depver} %{name}-common = %{samba_depver}
 Requires:       python3-talloc python3-tevent python3-tdb python3-ldb python3-dns
+Requires:       %{name}-libs = %{samba_depver}
 
 %if %with_libsmbclient
 Requires: libsmbclient = %{samba_depver}
@@ -315,8 +331,9 @@ that use SMB, RPC and other Samba provided protocols in Python 3 programs.
 %package -n python3-samba-test
 Summary:        Test package for python3 binding for %{name}
 
+Requires:       python3-%{name} = %{samba_depver}
 Requires: 		%{name}-client = %{samba_depver}
-Requires: 		%{name} = %{samba_depver}
+Requires: 		%{name}-libs = %{samba_depver}
 
 %description -n python3-samba-test
 This package contains the Python libraries used by the test suite of Samba.
@@ -347,7 +364,7 @@ and Wireshark to parse IDL and similar protocols.
 %package test
 Summary:        Testing tools and libraries for Samba servers and clients
 Requires:       %{name} = %{samba_depver} %{name}-common = %{samba_depver} %{name}-winbind = %{samba_depver}
-Requires:       %{name}-client = %{samba_depver}
+Requires:       %{name}-client = %{samba_depver} %{name}-libs = %{samba_depver}
 %if %with_dc
 Requires:       %{name}-dc = %{samba_depver}
 %endif
@@ -373,7 +390,7 @@ packages of Samba.
 Summary:        The winbind package for %{name}
 Requires:       %{name}-common = %{samba_depver} %{name}-common-tools = %{samba_depver}
 Requires:       %{name}-client = %{samba_depver} %{name}-winbind-modules = %{samba_depver}
-Requires: 		libwbclient = %{samba_depver}
+Requires: 		libwbclient = %{samba_depver} %{name}-libs = %{samba_depver}
 Provides:       samba4-winbind = %{samba_depver}
 Obsoletes:      samba4-winbind < %{samba_depver}
 
@@ -387,7 +404,8 @@ Windows user and group accounts on Linux.
 
 %package winbind-clients
 Summary:        The winbind client package for %{name}
-Requires:       %{name}-common = %{samba_depver} %{name}-client = %{samba_depver} %{name}-winbind = %{samba_depver}
+Requires:       %{name}-common = %{samba_depver} %{name}-client = %{samba_depver}
+Requires:       %{name}-libs = %{samba_depver} %{name}-winbind = %{samba_depver}
 %if %with_libwbclient
 Requires:       libwbclient = %{samba_depver}
 %endif
@@ -403,7 +421,7 @@ Requires:       chkconfig
 %if %with_libwbclient
 Requires:       libwbclient = %{samba_depver} %{name}-winbind = %{samba_depver}
 %else
-Requires:       %{name} = %{samba_depver}
+Requires:       %{name}-libs = %{samba_depver}
 %endif
 Requires: 		samba-client = %{samba_depver}
 
@@ -416,7 +434,7 @@ the local kerberos library to use the same KDC as samba and winbind use
 
 %package winbind-modules
 Summary:        The winbind modules for %{name}
-Requires:       %{name}-client = %{samba_depver} %{name} = %{samba_depver} pam
+Requires:       %{name}-client = %{samba_depver} %{name}-libs = %{samba_depver} pam
 %if %with_libwbclient
 Requires:       libwbclient = %{samba_depver}
 %endif
@@ -457,7 +475,6 @@ Summary:        Help package for %{name}
 
 %description help
 This package contains some man help files for %{name}.
-
 
 %prep
 zcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
@@ -806,6 +823,8 @@ if [ $1 -eq 0 ] ; then
 	%{_sbindir}/update-alternatives --remove cups_backend_smb %{_libexecdir}/samba/smbspool_krb5_wrapper
 fi
 
+%ldconfig_scriptlets libs
+
 %if %with_libsmbclient
 %ldconfig_scriptlets -n libsmbclient
 %endif
@@ -912,16 +931,6 @@ fi
 %doc examples/autofs examples/LDAP examples/misc
 %doc examples/printer-accounting examples/printing
 %doc packaging/README.downgrade
-%{_libdir}/libdcerpc-samr.so.*
-
-%{_libdir}/samba/libLIBWBCLIENT-OLD-samba4.so
-%{_libdir}/samba/libauth4-samba4.so
-%{_libdir}/samba/libauth-unix-token-samba4.so
-%{_libdir}/samba/libdcerpc-samba4.so
-%{_libdir}/samba/libshares-samba4.so
-%{_libdir}/samba/libsmbpasswdparser-samba4.so
-%{_libdir}/samba/libxattr-tdb-samba4.so
-
 
 %{_bindir}/smbstatus
 %{_sbindir}/eventlogadm
@@ -996,6 +1005,17 @@ fi
 %endif
 
 %attr(775,root,printadmin) %dir /var/lib/samba/drivers
+
+%files libs
+%{_libdir}/libdcerpc-samr.so.*
+
+%{_libdir}/samba/libLIBWBCLIENT-OLD-samba4.so
+%{_libdir}/samba/libauth4-samba4.so
+%{_libdir}/samba/libauth-unix-token-samba4.so
+%{_libdir}/samba/libdcerpc-samba4.so
+%{_libdir}/samba/libshares-samba4.so
+%{_libdir}/samba/libsmbpasswdparser-samba4.so
+%{_libdir}/samba/libxattr-tdb-samba4.so
 
 %files client
 %doc source3/client/README.smbspool
@@ -3057,6 +3077,12 @@ fi
 %{_mandir}/man8/*
 
 %changelog
+* Mon Feb 24 2020 hexiujun <hexiujun1@huawei.com> - 4.11.6-3
+- Type:enhancement
+- ID:NA
+- SUG:NA
+- DESC:unpack libs subpackage
+
 * Fri Feb 21 2020 openEuler Buildteam <buildteam@openeuler.org> - 4.11.6-2
 - use zcat instead of xzcat
 
