@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        3
+Release:        4
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -147,6 +147,7 @@ Requires: libwbclient = %{samba_depver}
 
 Provides: samba4-client = %{samba_depver} %{name}-client-libs
 Obsoletes: samba4-client < %{samba_depver} %{name}-client-libs
+Obsoletes: python2-samba 
 
 %description client
 This package includes some files about SMB/CIFS clients to complement the SMB/CIFS clients.
@@ -3077,6 +3078,9 @@ fi
 %{_mandir}/man8/*
 
 %changelog
+* Sat Mar 21 2020 songnannan <songnannan2@huawei.com> - 4.11.6-4
+- bugfix about update
+
 * Mon Feb 24 2020 hexiujun <hexiujun1@huawei.com> - 4.11.6-3
 - Type:enhancement
 - ID:NA
