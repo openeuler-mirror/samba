@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        4
+Release:        5
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -275,10 +275,10 @@ of the user issuing the print job.
 %package -n libsmbclient
 Summary: 		The SMB client library
 Requires: 		%{name}-common = %{samba_depver} %{name}-client = %{samba_depver}
-
 %if %with_libwbclient
 Requires: libwbclient = %{samba_depver}
 %endif
+Obsoletes: 		python2-samba
 
 %description -n libsmbclient
 This pacakge contains the SMB client library from the Samba suite.
@@ -317,6 +317,7 @@ Summary:        Python3 library package for %{name}
 Requires:       %{name} = %{samba_depver} %{name}-client = %{samba_depver} %{name}-common = %{samba_depver}
 Requires:       python3-talloc python3-tevent python3-tdb python3-ldb python3-dns
 Requires:       %{name}-libs = %{samba_depver}
+Obsoletes:	python2-samba
 
 %if %with_libsmbclient
 Requires: libsmbclient = %{samba_depver}
@@ -3078,6 +3079,9 @@ fi
 %{_mandir}/man8/*
 
 %changelog
+* Sat Mar 21 2020 songnannan <songnannan2@huawei.com> - 4.11.6-5
+- bugfix about update
+
 * Sat Mar 21 2020 songnannan <songnannan2@huawei.com> - 4.11.6-4
 - bugfix about update
 
