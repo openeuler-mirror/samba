@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        5
+Release:        6
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -69,6 +69,14 @@ Source201:      README.downgrade
 Patch100:       0000-use-gnutls-for-des-cbc.patch
 Patch101:       0001-handle-removal-des-enctypes-from-krb5.patch
 Patch102:       0002-samba-tool-create-working-private-krb5.conf.patch
+Patch103:       CVE-2020-10700-1.patch
+Patch104:       CVE-2020-10700-3.patch
+Patch105:       CVE-2020-10704-1.patch
+Patch106:       CVE-2020-10704-3.patch
+Patch107:       CVE-2020-10704-5.patch
+Patch108:       CVE-2020-10704-6.patch
+Patch109:       CVE-2020-10704-7.patch
+Patch110:       CVE-2020-10704-8.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3079,6 +3087,9 @@ fi
 %{_mandir}/man8/*
 
 %changelog
+* Wed May 20 2020 zhouyihang <zhouyihang3@huawei.com> - 4.11.6-6
+- fix CVE-2020-10700,CVE-2020-10704
+
 * Sat Mar 21 2020 songnannan <songnannan2@huawei.com> - 4.11.6-5
 - bugfix about update
 
