@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        6
+Release:        7
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -678,10 +678,6 @@ for i in \
     %{_libdir}/samba/libdnsserver-common-samba4.so \
     %{_libdir}/samba/libdsdb-garbage-collect-tombstones-samba4.so \
     %{_libdir}/samba/libscavenge-dns-records-samba4.so \
-    %{_mandir}/man8/samba.8 \
-    %{_mandir}/man8/samba_downgrade_db.8 \
-    %{_mandir}/man8/samba-tool.8 \
-    %{_mandir}/man8/samba-gpupdate.8 \
     %{_libdir}/samba/ldb/ildap.so \
     %{_libdir}/samba/ldb/ldbsamba_extensions.so \
     %{_unitdir}/samba.service \
@@ -1161,7 +1157,6 @@ fi
 
 %if ! %with_libsmbclient
 %{_libdir}/samba/libsmbclient.so.*
-%{_mandir}/man7/libsmbclient.7*
 #endif ! with_libsmbclient
 %endif
 
@@ -1273,10 +1268,6 @@ fi
 %{_libdir}/samba/ldb/wins_ldb.so
 %{_libdir}/samba/vfs/posix_eadb.so
 %dir /var/lib/samba/sysvol
-%{_mandir}/man8/samba.8*
-%{_mandir}/man8/samba_downgrade_db.8*
-%{_mandir}/man8/samba-gpupdate.8*
-%{_mandir}/man8/samba-tool.8*
 
 %files dc-provision
 %license source4/setup/ad-schema/licence.txt
@@ -1451,19 +1442,15 @@ fi
 %files vfs-cephfs
 %{_libdir}/samba/vfs/ceph.so
 %{_libdir}/samba/vfs/ceph_snapshots.so
-%{_mandir}/man8/vfs_ceph.8*
-%{_mandir}/man8/vfs_ceph_snapshots.8*
 %endif
 
 %if %{with_vfs_glusterfs}
 %files vfs-glusterfs
 %{_libdir}/samba/vfs/glusterfs.so
-%{_mandir}/man8/vfs_glusterfs.8*
 %endif
 
 %files krb5-printing
 %attr(0700,root,root) %{_libexecdir}/samba/smbspool_krb5_wrapper
-%{_mandir}/man8/smbspool_krb5_wrapper.8*
 
 %if %with_libsmbclient
 %files -n libsmbclient
@@ -1473,7 +1460,6 @@ fi
 %{_includedir}/samba-4.0/libsmbclient.h
 %{_libdir}/libsmbclient.so
 %{_libdir}/pkgconfig/smbclient.pc
-%{_mandir}/man7/libsmbclient.7*
 #endif with_libsmbclient
 %endif
 
@@ -1525,12 +1511,6 @@ fi
 %attr(644,root,root) %{perl_vendorlib}/Parse/Pidl/Samba4/TDR.pm
 %attr(644,root,root) %{perl_vendorlib}/Parse/Pidl/NDR.pm
 %attr(644,root,root) %{perl_vendorlib}/Parse/Pidl/Util.pm
-%attr(644,root,root) %{_mandir}/man1/pidl.1*
-%attr(644,root,root) %{_mandir}/man3/Parse::Pidl::Dump.3pm*
-%attr(644,root,root) %{_mandir}/man3/Parse::Pidl::NDR.3pm*
-%attr(644,root,root) %{_mandir}/man3/Parse::Pidl::Util.3pm*
-%attr(644,root,root) %{_mandir}/man3/Parse::Pidl::Wireshark::Conformance.3pm*
-%attr(644,root,root) %{_mandir}/man3/Parse::Pidl::Wireshark::NDR.3pm*
 
 %files -n python3-%{name}
 %dir %{python3_sitearch}/samba/
@@ -3079,14 +3059,12 @@ fi
 %endif
 
 %files help
-%{_mandir}/man1/*
-%{_mandir}/man3/Parse::Pidl*
-%{_mandir}/man5/*
-%{_mandir}/man7/*
-%exclude %{_mandir}/man7/libsmbclient.7.gz
-%{_mandir}/man8/*
+%{_mandir}/man*
 
 %changelog
+* Fri May 29 2020 songzifeng <songzifeng1@huawei.com> - 4.11.6-7
+- fix the conflict of man and help
+
 * Wed May 20 2020 zhouyihang <zhouyihang3@huawei.com> - 4.11.6-6
 - fix CVE-2020-10700,CVE-2020-10704
 
