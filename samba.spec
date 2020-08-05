@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.6
-Release:        7
+Release:        8
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -66,17 +66,38 @@ Source7:        samba.pamd
 
 Source201:      README.downgrade
 
-Patch100:       0000-use-gnutls-for-des-cbc.patch
-Patch101:       0001-handle-removal-des-enctypes-from-krb5.patch
-Patch102:       0002-samba-tool-create-working-private-krb5.conf.patch
-Patch103:       CVE-2020-10700-1.patch
-Patch104:       CVE-2020-10700-3.patch
-Patch105:       CVE-2020-10704-1.patch
-Patch106:       CVE-2020-10704-3.patch
-Patch107:       CVE-2020-10704-5.patch
-Patch108:       CVE-2020-10704-6.patch
-Patch109:       CVE-2020-10704-7.patch
-Patch110:       CVE-2020-10704-8.patch
+Patch0:       	0000-use-gnutls-for-des-cbc.patch
+Patch1:       	0001-handle-removal-des-enctypes-from-krb5.patch
+Patch2:       	0002-samba-tool-create-working-private-krb5.conf.patch
+Patch3:       	CVE-2020-10700-1.patch
+Patch4:       	CVE-2020-10700-3.patch
+Patch5:       	CVE-2020-10704-1.patch
+Patch6:       	CVE-2020-10704-3.patch
+Patch7:       	CVE-2020-10704-5.patch
+Patch8:       	CVE-2020-10704-6.patch
+Patch9:       	CVE-2020-10704-7.patch
+Patch10:       	CVE-2020-10704-8.patch
+Patch11:	CVE-2020-10730-1.patch
+Patch12:	CVE-2020-10730-2.patch
+Patch13:	CVE-2020-10730-3.patch
+Patch14:	CVE-2020-10730-4.patch
+Patch15:	CVE-2020-10730-5.patch
+Patch16:	CVE-2020-10730-6.patch
+Patch17:	CVE-2020-10730-7.patch
+Patch18:	CVE-2020-10730-8.patch
+Patch19:	CVE-2020-10730-9.patch
+Patch20:	CVE-2020-10730-10.patch
+Patch21:	CVE-2020-10745-1.patch
+Patch22:	CVE-2020-10745-2.patch
+Patch23:	CVE-2020-10745-3.patch
+Patch24:	CVE-2020-10745-4.patch
+Patch25:	CVE-2020-10745-5.patch
+Patch26:	CVE-2020-10745-6.patch
+Patch27:	CVE-2020-10745-7.patch
+Patch28:	CVE-2020-14303-1.patch
+Patch29:	CVE-2020-14303-2.patch
+Patch30:	CVE-2020-10760-1.patch
+Patch31:	CVE-2020-10760-2.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -1001,15 +1022,6 @@ fi
 %config %{_sysconfdir}/openldap/schema/samba.schema
 %config(noreplace) %{_sysconfdir}/pam.d/samba
 
-%if ! %{with_vfs_glusterfs}
-%exclude %{_mandir}/man8/vfs_glusterfs.8*
-%endif
-
-%if ! %{with_vfs_cephfs}
-%exclude %{_mandir}/man8/vfs_ceph.8*
-%exclude %{_mandir}/man8/vfs_ceph_snapshots.8*
-%endif
-
 %attr(775,root,printadmin) %dir /var/lib/samba/drivers
 
 %files libs
@@ -1902,6 +1914,8 @@ fi
 %{python3_sitearch}/samba/tests/__pycache__/upgradeprovisionneeddc.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/usage.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/xattr.*.pyc
+%{python3_sitearch}/samba/tests/__pycache__/dns_packet.*.pyc
+%{python3_sitearch}/samba/tests/dns_packet.py
 %{python3_sitearch}/samba/tests/audit_log_base.py
 %{python3_sitearch}/samba/tests/audit_log_dsdb.py
 %{python3_sitearch}/samba/tests/audit_log_pass_change.py
@@ -3062,6 +3076,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Wed Aug 05 2020 yuboyun <yuboyun@huawei.com> - 4.11.6-8
+- Type:cves
+- ID:CVE-2020-10730 CVE-2020-10745 CVE-2020-14303 CVE-2020-10760
+- SUG:NA
+- DESC:fix CVE-2020-10730CVE-2020-10745CVE-2020-14303CVE-2020-10760
+
 * Fri May 29 2020 songzifeng <songzifeng1@huawei.com> - 4.11.6-7
 - fix the conflict of man and help
 
