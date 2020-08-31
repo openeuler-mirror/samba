@@ -4,7 +4,7 @@
 %define talloc_version 2.2.0
 %define tdb_version 1.4.2
 %define tevent_version 0.10.0
-%define ldb_version 2.0.8
+%define ldb_version 2.0.12
 
 %undefine _strict_symbol_defs_build
 
@@ -48,8 +48,8 @@
 %define samba_depver %{version}-%{release}
 
 Name:           samba
-Version:        4.11.6
-Release:        8
+Version:        4.11.12
+Release:        1
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -69,35 +69,7 @@ Source201:      README.downgrade
 Patch0:       	0000-use-gnutls-for-des-cbc.patch
 Patch1:       	0001-handle-removal-des-enctypes-from-krb5.patch
 Patch2:       	0002-samba-tool-create-working-private-krb5.conf.patch
-Patch3:       	CVE-2020-10700-1.patch
-Patch4:       	CVE-2020-10700-3.patch
-Patch5:       	CVE-2020-10704-1.patch
-Patch6:       	CVE-2020-10704-3.patch
-Patch7:       	CVE-2020-10704-5.patch
-Patch8:       	CVE-2020-10704-6.patch
-Patch9:       	CVE-2020-10704-7.patch
-Patch10:       	CVE-2020-10704-8.patch
-Patch11:	CVE-2020-10730-1.patch
-Patch12:	CVE-2020-10730-2.patch
-Patch13:	CVE-2020-10730-3.patch
-Patch14:	CVE-2020-10730-4.patch
-Patch15:	CVE-2020-10730-5.patch
-Patch16:	CVE-2020-10730-6.patch
-Patch17:	CVE-2020-10730-7.patch
-Patch18:	CVE-2020-10730-8.patch
-Patch19:	CVE-2020-10730-9.patch
-Patch20:	CVE-2020-10730-10.patch
-Patch21:	CVE-2020-10745-1.patch
-Patch22:	CVE-2020-10745-2.patch
-Patch23:	CVE-2020-10745-3.patch
-Patch24:	CVE-2020-10745-4.patch
-Patch25:	CVE-2020-10745-5.patch
-Patch26:	CVE-2020-10745-6.patch
-Patch27:	CVE-2020-10745-7.patch
-Patch28:	CVE-2020-14303-1.patch
-Patch29:	CVE-2020-14303-2.patch
-Patch30:	CVE-2020-10760-1.patch
-Patch31:	CVE-2020-10760-2.patch
+Patch3:		samba-4.11.13-lib_util_wscript.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -1856,6 +1828,7 @@ fi
 %{python3_sitearch}/samba/tests/__pycache__/hostconfig.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/join.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/krb5_credentials.*.pyc
+%{python3_sitearch}/samba/tests/__pycache__/ldap_raw.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/ldap_referrals.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/loadparm.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/libsmb.*.pyc
@@ -2039,6 +2012,7 @@ fi
 %{python3_sitearch}/samba/tests/kcc/kcc_utils.py
 %{python3_sitearch}/samba/tests/kcc/ldif_import_export.py
 %{python3_sitearch}/samba/tests/krb5_credentials.py
+%{python3_sitearch}/samba/tests/ldap_raw.py
 %{python3_sitearch}/samba/tests/ldap_referrals.py
 %{python3_sitearch}/samba/tests/libsmb.py
 %{python3_sitearch}/samba/tests/loadparm.py
@@ -2113,6 +2087,9 @@ fi
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/user.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_check_password_script.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_virtualCryptSHA.*.pyc
+%{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_virtualCryptSHA_base.*.pyc
+%{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_virtualCryptSHA_gpg.*.pyc
+%{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_virtualCryptSHA_userPassword.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/user_wdigest.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/visualize.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/visualize_drs.*.pyc
@@ -2144,6 +2121,9 @@ fi
 %{python3_sitearch}/samba/tests/samba_tool/user.py
 %{python3_sitearch}/samba/tests/samba_tool/user_check_password_script.py
 %{python3_sitearch}/samba/tests/samba_tool/user_virtualCryptSHA.py
+%{python3_sitearch}/samba/tests/samba_tool/user_virtualCryptSHA_base.py
+%{python3_sitearch}/samba/tests/samba_tool/user_virtualCryptSHA_gpg.py
+%{python3_sitearch}/samba/tests/samba_tool/user_virtualCryptSHA_userPassword.py
 %{python3_sitearch}/samba/tests/samba_tool/user_wdigest.py
 %{python3_sitearch}/samba/tests/samba_tool/visualize.py
 %{python3_sitearch}/samba/tests/samba_tool/visualize_drs.py
@@ -3076,6 +3056,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Mon Aug 31 2020 yuboyun <yuboyun@huawei.com> - 4.11.12-1
+- Type:NA
+- ID:NA
+- SUG:NA
+- DESC:update to 4.11.12
+
 * Wed Aug 05 2020 yuboyun <yuboyun@huawei.com> - 4.11.6-8
 - Type:cves
 - ID:CVE-2020-10730 CVE-2020-10745 CVE-2020-14303 CVE-2020-10760
