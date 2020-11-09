@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        2
+Release:        3
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -113,6 +113,7 @@ Requires:       %{name}-client = %{samba_depver}
 %if %with_libwbclient
 Requires:       libwbclient = %{samba_depver}
 %endif
+Requires:       %{name}-help
 
 Provides:       samba4 = %{samba_depver} samba-doc = %{samba_depver} samba-domainjoin-gui = %{samba_depver}
 Provides:       samba-swat = %{samba_depver} samba4-swat = %{samba_depver}
@@ -3057,6 +3058,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Mon Nov 09 2020 xihaochen <xihaochen@huawei.com> - 4.11.12-3
+- Type:requirement
+- CVE:NA
+- SUG:NA
+- DESC:add samba-help dependency for samba
+
 * Fri Sep 15 2020 liulong <liulong20@huawei.com> - 4.11.12-2
 - Type:cves
 - ID:CVE-2020-1472
