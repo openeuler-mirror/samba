@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        2
+Release:        3
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -67,6 +67,10 @@ Source7:        samba.pamd
 Source201:      README.downgrade
 
 Patch0:         CVE-2020-1472.patch
+Patch1:         0001-CVE-2020-14383.patch
+Patch2:         0002-CVE-2020-14383.patch
+Patch3:         CVE-2020-14318.patch
+Patch4:         CVE-2020-14323.patch
 
 BuildRequires: avahi-devel bison cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3087,6 +3091,12 @@ fi
 %endif
 
 %changelog
+* Fri Nov 27 2020 lunankun <lunankun@huawei.com> - 4.12.5-3
+- Type:cves
+- Id:CVE-2020-14318 CVE-2020-14323 CVE-2020-14383
+- SUG:NA
+- DESC:fix CVE-2020-14318 CVE-2020-14323 CVE-2020-14383
+
 * Fri Sep 25 2020 liulong <liulong20@huawei.com> - 4.12.5-2
 - Type:cves
 - Id:CVE-2020-1472
