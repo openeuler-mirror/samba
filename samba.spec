@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        3
+Release:        4
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -77,6 +77,7 @@ BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel lib
 BuildRequires: libcap-devel libicu-devel libcmocka-devel libnsl2-devel libtirpc-devel libuuid-devel libxslt lmdb ncurses-devel openldap-devel
 BuildRequires: pam-devel perl-interpreter perl-generators perl(Archive::Tar) perl(Test::More) popt-devel python3-devel python3-setuptools quota-devel
 BuildRequires: readline-devel rpcgen rpcsvc-proto-devel sed libtasn1-devel libtasn1-tools xfsprogs-devel xz zlib-devel >= 1.2.3
+BuildRequires: gcc
 
 %if %{with_winexe}
 BuildRequires: mingw32-gcc
@@ -3091,6 +3092,12 @@ fi
 %endif
 
 %changelog
+* Thu May 27 2021 lijingyuan <lijingyuan3@huawei.com> - 4.12.5-4
+- Type:bugfix
+- Id:
+- SUG:NA
+- DESC:Add the compilation dependency of gcc.
+
 * Sat Mar 27 2021 seuzw <930zhaowei@163.com> - 4.12.5-3
 - Type:cves
 - Id:CVE-2020-14318 CVE-2020-14323 CVE-2020-14383
