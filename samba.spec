@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        3
+Release:        4
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -71,6 +71,9 @@ Patch1:       	0001-handle-removal-des-enctypes-from-krb5.patch
 Patch2:       	0002-samba-tool-create-working-private-krb5.conf.patch
 Patch3:         samba-4.11.13-lib_util_wscript.patch
 Patch4:         CVE-2020-1472.patch
+Patch5:         CVE-2021-20277.patch
+Patch6:         CVE-2020-27840.patch
+Patch7:         CVE-2021-20254.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3058,6 +3061,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Wed May 26 2021 gaihuiying <gaihuiying1@huawei.com> - 4.11.12-4
+- Type:cves
+- ID:CVE-2020-27840 CVE-2021-20277 CVE-2021-20254
+- SUG:NA
+- DESC:fix CVE-2020-27840 CVE-2021-20277 CVE-2021-20254
+
 * Mon Nov 09 2020 xihaochen <xihaochen@huawei.com> - 4.11.12-3
 - Type:requirement
 - CVE:NA
