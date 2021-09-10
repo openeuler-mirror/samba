@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        5
+Release:        6
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -81,6 +81,7 @@ BuildRequires: libcap-devel libicu-devel libcmocka-devel libnsl2-devel libtirpc-
 BuildRequires: pam-devel perl-interpreter perl-generators perl(Archive::Tar) perl(Test::More) popt-devel python3-devel python3-setuptools quota-devel
 BuildRequires: readline-devel rpcgen rpcsvc-proto-devel sed libtasn1-devel libtasn1-tools xfsprogs-devel xz zlib-devel >= 1.2.3
 BuildRequires: gcc
+BuildRequires: chrpath
 
 %if %{with_winexe}
 BuildRequires: mingw32-gcc
@@ -684,6 +685,75 @@ install -m 0755 packaging/NetworkManager/30-winbind-systemd \
 install -d -m 0755 %{buildroot}%{_libdir}/krb5/plugins/libkrb5
 touch %{buildroot}%{_libdir}/krb5/plugins/libkrb5/winbind_krb5_locator.so
 
+# remove rpath and runpath
+chrpath -d %{buildroot}%{_libdir}/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/pdb/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/vfs/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/wbclient/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/auth/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/nss_info/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/idmap/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/service/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/process_model/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/ldb/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/gensec/*.so*
+chrpath -d %{buildroot}%{_libdir}/%{name}/bind9/*.so*
+chrpath -d %{buildroot}%{_libdir}/security/*.so*
+chrpath -d %{buildroot}%{_libdir}/krb5/plugins/kdb/samba.so
+chrpath -d %{buildroot}%{python3_sitearch}/%{name}/*.so*
+chrpath -d %{buildroot}%{python3_sitearch}/%{name}/samba3/*.so*
+chrpath -d %{buildroot}%{python3_sitearch}/%{name}/dcerpc/*.so*
+
+find %{buildroot}%{_libexecdir}/ctdb -type f ! -name ctdb_lvs ! -name ctdb_natgw| xargs chrpath -d
+chrpath -d %{buildroot}%{_libexecdir}/%{name}/smbspool_krb5_wrapper
+chrpath -d %{buildroot}%{_bindir}/rpcclient
+chrpath -d %{buildroot}%{_bindir}/smbclient
+chrpath -d %{buildroot}%{_bindir}/regshell
+chrpath -d %{buildroot}%{_bindir}/nmblookup
+chrpath -d %{buildroot}%{_bindir}/samba-regedit
+chrpath -d %{buildroot}%{_bindir}/regtree
+chrpath -d %{buildroot}%{_bindir}/smbspool
+chrpath -d %{buildroot}%{_bindir}/mvxattr
+chrpath -d %{buildroot}%{_bindir}/dbwrap_tool
+chrpath -d %{buildroot}%{_bindir}/smbcquotas
+chrpath -d %{buildroot}%{_bindir}/dumpmscat
+chrpath -d %{buildroot}%{_bindir}/cifsdd
+chrpath -d %{buildroot}%{_bindir}/sharesec
+chrpath -d %{buildroot}%{_bindir}/regdiff
+chrpath -d %{buildroot}%{_bindir}/smbget
+chrpath -d %{buildroot}%{_bindir}/oLschema2ldif
+chrpath -d %{buildroot}%{_bindir}/smbtree
+chrpath -d %{buildroot}%{_bindir}/smbcacls
+chrpath -d %{buildroot}%{_bindir}/regpatch
+chrpath -d %{buildroot}%{_bindir}/smbcontrol
+chrpath -d %{buildroot}%{_bindir}/pdbedit
+chrpath -d %{buildroot}%{_bindir}/net
+chrpath -d %{buildroot}%{_bindir}/smbpasswd
+chrpath -d %{buildroot}%{_bindir}/profiles
+chrpath -d %{buildroot}%{_bindir}/testparm
+chrpath -d %{buildroot}%{_bindir}/smbstatus
+chrpath -d %{buildroot}%{_bindir}/smbtorture
+chrpath -d %{buildroot}%{_bindir}/masktest
+chrpath -d %{buildroot}%{_bindir}/ndrdump
+chrpath -d %{buildroot}%{_bindir}/locktest
+chrpath -d %{buildroot}%{_bindir}/gentest
+chrpath -d %{buildroot}%{_bindir}/mdfind
+chrpath -d %{buildroot}%{_bindir}/wbinfo
+chrpath -d %{buildroot}%{_bindir}/ntlm_auth
+chrpath -d %{buildroot}%{_bindir}/ltdbtool
+chrpath -d %{buildroot}%{_bindir}/ctdb
+
+chrpath -d %{buildroot}%{_sbindir}/eventlogadm
+chrpath -d %{buildroot}%{_sbindir}/smbd
+chrpath -d %{buildroot}%{_sbindir}/nmbd
+chrpath -d %{buildroot}%{_sbindir}/winbindd
+chrpath -d %{buildroot}%{_sbindir}/samba
+chrpath -d %{buildroot}%{_sbindir}/ctdbd
+
+mkdir -p %{buildroot}/etc/ld.so.conf.d
+echo "%{_libdir}/%{name}" > %{buildroot}/etc/ld.so.conf.d/%{name}-%{_arch}.conf
+
 %if ! %with_dc
 for i in \
     %{_libdir}/samba/libdfs-server-ad-samba4.so \
@@ -787,6 +857,7 @@ TDB_NO_FSYNC=1 %make_build test FAIL_IMMEDIATELY=1
 %post
 %systemd_post smb.service
 %systemd_post nmb.service
+/sbin/ldconfig
 
 %preun
 %systemd_preun smb.service
@@ -795,6 +866,7 @@ TDB_NO_FSYNC=1 %make_build test FAIL_IMMEDIATELY=1
 %postun
 %systemd_postun_with_restart smb.service
 %systemd_postun_with_restart nmb.service
+/sbin/ldconfig
 
 %pre common
 getent group printadmin >/dev/null || groupadd -r printadmin || :
@@ -825,6 +897,9 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %if %{with_dc}
+%ldconfig_scriptlets -n python3-samba-dc
+%ldconfig_scriptlets dc-provision
+%ldconfig_scriptlets dc-bind-dlz
 
 %post dc
 /sbin/ldconfig
@@ -836,6 +911,7 @@ fi
 
 %postun dc
 %systemd_postun_with_restart samba.service
+/sbin/ldconfig
 #endif with_dc
 %endif
 
@@ -843,11 +919,13 @@ fi
 %{_sbindir}/update-alternatives --install %{_libexecdir}/samba/cups_backend_smb \
 	cups_backend_smb \
 	%{_libexecdir}/samba/smbspool_krb5_wrapper 50
+/sbin/ldconfig
 
 %postun krb5-printing
 if [ $1 -eq 0 ] ; then
 	%{_sbindir}/update-alternatives --remove cups_backend_smb %{_libexecdir}/samba/smbspool_krb5_wrapper
 fi
+/sbin/ldconfig
 
 %ldconfig_scriptlets libs
 
@@ -902,6 +980,7 @@ if [ $1 -eq 0 ]; then
     fi
 fi
 
+%ldconfig_scriptlets -n libwbclient
 #endif with_libwbclient
 %endif
 
@@ -912,12 +991,14 @@ fi
 
 %post winbind
 %systemd_post winbind.service
+/sbin/ldconfig
 
 %preun winbind
 %systemd_preun winbind.service
 
 %postun winbind
 %systemd_postun_with_restart winbind.service
+/sbin/ldconfig
 
 %postun winbind-krb5-locator
 if [ "$1" -ge "1" ]; then
@@ -925,10 +1006,12 @@ if [ "$1" -ge "1" ]; then
                 %{_sbindir}/update-alternatives --set winbind_krb5_locator.so %{_libdir}/samba/krb5/winbind_krb5_locator.so
         fi
 fi
+/sbin/ldconfig
 
 %post winbind-krb5-locator
 %{_sbindir}/update-alternatives --install %{_libdir}/krb5/plugins/libkrb5/winbind_krb5_locator.so \
                                 winbind_krb5_locator.so %{_libdir}/samba/krb5/winbind_krb5_locator.so 10
+/sbin/ldconfig
 
 %preun winbind-krb5-locator
 if [ $1 -eq 0 ]; then
@@ -936,19 +1019,28 @@ if [ $1 -eq 0 ]; then
 fi
 
 %ldconfig_scriptlets winbind-modules
+%ldconfig_scriptlets winbind-clients
 
 %if %with_clustering_support
+
+%ldconfig_scriptlets -n ctdb-tests
+
 %post -n ctdb
 /usr/bin/systemd-tmpfiles --create %{_tmpfilesdir}/ctdb.conf
 %systemd_post ctdb.service
+/sbin/ldconfig
 
 %preun -n ctdb
 %systemd_preun ctdb.service
 
 %postun -n ctdb
 %systemd_postun_with_restart ctdb.service
+/sbin/ldconfig
 %endif
 
+%ldconfig_scriptlets common-tools
+
+%ldconfig_scriptlets -n python3-samba
 
 ### SAMBA
 %files
@@ -1026,6 +1118,7 @@ fi
 %config(noreplace) %{_sysconfdir}/pam.d/samba
 
 %attr(775,root,printadmin) %dir /var/lib/samba/drivers
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files libs
 %{_libdir}/libdcerpc-samr.so.*
@@ -1038,6 +1131,7 @@ fi
 %{_libdir}/samba/libshares-samba4.so
 %{_libdir}/samba/libsmbpasswdparser-samba4.so
 %{_libdir}/samba/libxattr-tdb-samba4.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files client
 %doc source3/client/README.smbspool
@@ -1167,6 +1261,7 @@ fi
 %{_libdir}/samba/libutil-reg-samba4.so
 %{_libdir}/samba/libutil-setid-samba4.so
 %{_libdir}/samba/libutil-tdb-samba4.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %if ! %with_libwbclient
 %{_libdir}/samba/libwbclient.so.*
@@ -1205,6 +1300,7 @@ fi
 %{_libdir}/samba/pdb/ldapsam.so
 %{_libdir}/samba/pdb/smbpasswd.so
 %{_libdir}/samba/pdb/tdbsam.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files common-tools
 %{_bindir}/net
@@ -1213,6 +1309,7 @@ fi
 %{_bindir}/smbcontrol
 %{_bindir}/smbpasswd
 %{_bindir}/testparm
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %if %{with_dc}
 %files dc
@@ -1280,6 +1377,7 @@ fi
 %{_libdir}/samba/ldb/vlv.so
 %{_libdir}/samba/ldb/wins_ldb.so
 %{_libdir}/samba/vfs/posix_eadb.so
+%config(noreplace) /etc/ld.so.conf.d/*
 %dir /var/lib/samba/sysvol
 
 %files dc-provision
@@ -1311,6 +1409,7 @@ fi
 %{_libdir}/samba/libdsdb-module-samba4.so
 %{_libdir}/samba/libdsdb-garbage-collect-tombstones-samba4.so
 %{_libdir}/samba/libscavenge-dns-records-samba4.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files dc-bind-dlz
 %attr(770,root,named) %dir /var/lib/samba/bind-dns
@@ -1320,6 +1419,7 @@ fi
 %{_libdir}/samba/bind9/dlz_bind9_10.so
 %{_libdir}/samba/bind9/dlz_bind9_11.so
 %{_libdir}/samba/bind9/dlz_bind9_12.so
+%config(noreplace) /etc/ld.so.conf.d/*
 #endif with_dc
 %endif
 
@@ -1466,10 +1566,12 @@ fi
 
 %files krb5-printing
 %attr(0700,root,root) %{_libexecdir}/samba/smbspool_krb5_wrapper
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %if %with_libsmbclient
 %files -n libsmbclient
 %{_libdir}/libsmbclient.so.*
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files -n libsmbclient-devel
 %{_includedir}/samba-4.0/libsmbclient.h
@@ -1482,6 +1584,7 @@ fi
 %files -n libwbclient
 %{_libdir}/samba/wbclient/libwbclient.so.*
 %{_libdir}/samba/libwinbind-client-samba4.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files -n libwbclient-devel
 %{_includedir}/samba-4.0/wbclient.h
@@ -1757,6 +1860,8 @@ fi
 %{_libdir}/pkgconfig/samba-policy.*.pc
 %{_libdir}/samba/libsamba-net.*-samba4.so
 %{_libdir}/samba/libsamba-python.*-samba4.so
+%config(noreplace) /etc/ld.so.conf.d/*
+
 
 %if %{with_dc}
 %files -n python3-%{name}-dc
@@ -1817,6 +1922,7 @@ fi
 
 %{python3_sitearch}/samba/remove_dc.py
 %{python3_sitearch}/samba/uptodateness.py
+%config(noreplace) /etc/ld.so.conf.d/*
 %endif
 
 %files -n python3-%{name}-test
@@ -2184,6 +2290,7 @@ fi
 %{_bindir}/masktest
 %{_bindir}/ndrdump
 %{_bindir}/smbtorture
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %if %{with testsuite}
 # files to ignore in testsuite mode
@@ -2200,6 +2307,7 @@ fi
 
 ### WINBIND
 %files winbind
+%config(noreplace) /etc/ld.so.conf.d/*
 %{_libdir}/samba/idmap
 %{_libdir}/samba/nss_info
 %{_libdir}/samba/libnss-info-samba4.so
@@ -2210,6 +2318,7 @@ fi
 %{_prefix}/lib/NetworkManager
 
 %files winbind-clients
+%config(noreplace) /etc/ld.so.conf.d/*
 %{_bindir}/ntlm_auth
 %{_bindir}/wbinfo
 %{_libdir}/samba/krb5/winbind_krb5_localauth.so
@@ -2217,8 +2326,10 @@ fi
 %files winbind-krb5-locator
 %ghost %{_libdir}/krb5/plugins/libkrb5/winbind_krb5_locator.so
 %{_libdir}/samba/krb5/winbind_krb5_locator.so
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files winbind-modules
+%config(noreplace) /etc/ld.so.conf.d/*
 %{_libdir}/libnss_winbind.so*
 %{_libdir}/libnss_wins.so*
 %{_libdir}/security/pam_winbind.so
@@ -2309,6 +2420,7 @@ fi
 %{_datadir}/ctdb/events/legacy/60.nfs.script
 %{_datadir}/ctdb/events/legacy/70.iscsi.script
 %{_datadir}/ctdb/events/legacy/91.lvs.script
+%config(noreplace) /etc/ld.so.conf.d/*
 
 %files -n ctdb-tests
 %doc ctdb/tests/README
@@ -3081,6 +3193,7 @@ fi
 %{_datadir}/ctdb/tests/UNIT/tool/README
 %dir %{_datadir}/ctdb/tests/UNIT/tool/scripts
 %{_datadir}/ctdb/tests/UNIT/tool/scripts/local.sh
+%config(noreplace) /etc/ld.so.conf.d/*
 
 #endif with_clustering_support
 %endif
@@ -3095,6 +3208,12 @@ fi
 %endif
 
 %changelog
+* Fri Sep 10 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-6
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:remove runpath of samba's binary files
+
 * Mon May 31 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-5
 - Type:cves
 - ID:CVE-2020-27840 CVE-2021-20277 CVE-2021-20254
