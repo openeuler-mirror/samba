@@ -1,0 +1,126 @@
+From 575d39048e3b4f619d65d65303ac809c40c5d495 Mon Sep 17 00:00:00 2001
+From: Gary Lockyer <gary@catalyst.net.nz>
+Date: Fri, 7 Feb 2020 15:18:45 +1300
+Subject: [PATCH] idl: limit recurion on recursive elements
+
+Limit the max_recursion on self recursive definitions in the idl to
+20,000. This value is hopefully large eneough to not impact normal
+operation, but small eneough to prevent stack over flow issues.
+
+Credit to OSS-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19820
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=14254
+
+Signed-off-by: Gary Lockyer <gary@catalyst.net.nz>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+
+Autobuild-User(master): Andrew Bartlett <abartlet@samba.org>
+Autobuild-Date(master): Thu Feb 27 02:29:21 UTC 2020 on sn-devel-184
+---
+ librpc/idl/drsblobs.idl        |  2 +-
+ librpc/idl/drsuapi.idl         | 12 ++++++++----
+ librpc/idl/ioctl.idl           |  2 +-
+ source3/librpc/idl/secrets.idl |  2 +-
+ source3/librpc/idl/smbXsrv.idl |  2 +-
+ 5 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/librpc/idl/drsblobs.idl b/librpc/idl/drsblobs.idl
+index 072546a4369..b096b671c80 100644
+--- a/librpc/idl/drsblobs.idl
++++ b/librpc/idl/drsblobs.idl
+@@ -579,7 +579,7 @@ interface drsblobs {
+ 	} ExtendedErrorParam;
+ 
+ 	typedef [public] struct {
+-		ExtendedErrorInfo *next;
++		[max_recursion(20000)] ExtendedErrorInfo *next;
+ 		ExtendedErrorComputerName computer_name;
+ 		hyper pid;
+ 		NTTIME time;
+diff --git a/librpc/idl/drsuapi.idl b/librpc/idl/drsuapi.idl
+index 04725276121..db00eb8639e 100644
+--- a/librpc/idl/drsuapi.idl
++++ b/librpc/idl/drsuapi.idl
+@@ -690,7 +690,8 @@ interface drsuapi
+ 	} drsuapi_DsReplicaMetaDataCtr;
+ 
+ 	typedef [public,noprint] struct {
+-		drsuapi_DsReplicaObjectListItemEx *next_object;
++		[max_recursion(20000)]
++			drsuapi_DsReplicaObjectListItemEx *next_object;
+ 		drsuapi_DsReplicaObject object;
+ 		boolean32 is_nc_prefix;
+ 		GUID *parent_object_guid;
+@@ -1308,7 +1309,8 @@ interface drsuapi
+ 	/*****************/
+         /* Function 0x11 */
+ 	typedef [public,noprint] struct {
+-		drsuapi_DsReplicaObjectListItem *next_object;
++		[max_recursion(20000)]
++			drsuapi_DsReplicaObjectListItem *next_object;
+ 		drsuapi_DsReplicaObject object;
+ 	} drsuapi_DsReplicaObjectListItem;
+ 
+@@ -1408,7 +1410,8 @@ interface drsuapi
+ 	} drsuapi_DsAddEntry_AttrErr_V1;
+ 
+ 	typedef [noprint] struct {
+-		drsuapi_DsAddEntry_AttrErrListItem_V1 *next;
++		[max_recursion(20000)]
++			drsuapi_DsAddEntry_AttrErrListItem_V1 *next;
+ 		drsuapi_DsAddEntry_AttrErr_V1 err_data;
+ 	} drsuapi_DsAddEntry_AttrErrListItem_V1;
+ 
+@@ -1464,7 +1467,8 @@ interface drsuapi
+ 		drsuapi_DsAddEntry_RefType ref_type;
+ 		uint16 addr_list_count;
+ 		drsuapi_DsaAddressListItem_V1 *addr_list;
+-		drsuapi_DsAddEntry_RefErrListItem_V1 *next;
++		[max_recursion(20000)]
++			drsuapi_DsAddEntry_RefErrListItem_V1 *next;
+ 		boolean32 is_choice_set;
+ 		drsuapi_DsAddEntry_ChoiceType choice;
+ 	} drsuapi_DsAddEntry_RefErrListItem_V1;
+diff --git a/librpc/idl/ioctl.idl b/librpc/idl/ioctl.idl
+index ba68fbcb8f6..390e8562f69 100644
+--- a/librpc/idl/ioctl.idl
++++ b/librpc/idl/ioctl.idl
+@@ -151,7 +151,7 @@ interface netinterface
+ 	} fsctl_sockaddr_storage;
+ 
+ 	typedef [public,relative_base,noprint] struct {
+-		[relative] fsctl_net_iface_info *next;
++		[relative,max_recursion(20000)] fsctl_net_iface_info *next;
+ 		uint32 ifindex;
+ 		fsctl_net_iface_capability capability;
+ 		[value(0)] uint32 reserved;
+diff --git a/source3/librpc/idl/secrets.idl b/source3/librpc/idl/secrets.idl
+index 2c06fa6990d..186d925e45e 100644
+--- a/source3/librpc/idl/secrets.idl
++++ b/source3/librpc/idl/secrets.idl
+@@ -100,7 +100,7 @@ import "misc.idl", "samr.idl", "lsa.idl", "netlogon.idl", "security.idl";
+ 
+ 		NTTIME password_last_change;
+ 		hyper password_changes;
+-		secrets_domain_info1_change *next_change;
++		[max_recursion(20000)] secrets_domain_info1_change *next_change;
+ 
+ 		[ref] secrets_domain_info1_password *password;
+ 		secrets_domain_info1_password *old_password;
+diff --git a/source3/librpc/idl/smbXsrv.idl b/source3/librpc/idl/smbXsrv.idl
+index c6ce9c48789..4d9249fb3bb 100644
+--- a/source3/librpc/idl/smbXsrv.idl
++++ b/source3/librpc/idl/smbXsrv.idl
+@@ -267,7 +267,7 @@ interface smbXsrv
+ 
+ 	typedef struct {
+ 		[ignore] smbXsrv_session_auth0		*prev;
+-		smbXsrv_session_auth0			*next;
++		[max_recursion(20000)] smbXsrv_session_auth0 *next;
+ 		[ignore] smbXsrv_session		*session;
+ 		[ignore] smbXsrv_connection		*connection;
+ 		[ignore] gensec_security		*gensec;
+-- 
+GitLab
+

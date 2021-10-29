@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        7
+Release:        8
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -75,6 +75,17 @@ Patch5:         CVE-2021-20277.patch
 Patch6:         CVE-2020-27840.patch
 Patch7:         CVE-2021-20254.patch
 Patch8:         backport-CVE-2021-3671.patch
+Patch9:         backport-lzxpress-add-bounds-checking-to-lzxpress_decompress.patch
+Patch10:        backport-librpc-ndr-NDR_PULL_ALIGN-check-for-unsigned-overflow.patch
+Patch11:        backport-librpc-ndr-add-recursion-check-macros.patch
+Patch12:        backport-librpc-ndr-Heap-buffer-overflow-in-lzxpress_decompress.patch
+Patch13:        backport-pidl-Add-recursive-depth-checks.patch
+Patch14:        backport-idl-drsuapi_DsaAddressListItem_V1-limit-recursion.patch
+Patch15:        backport-idl-limit-recurion-on-recursive-elements.patch
+Patch16:        backport-lib-ldb-Limit-depth-of-ldb_parse_tree.patch
+Patch17:        backport-witness-idl-fix-length-calculation-for-witness_IPaddrInfoList.patch
+Patch18:        backport-lzxpress-avoid-technically-undefined-shift.patch
+Patch19:        backport-utils-asn1-avoid-undefined-behaviour.patch
 
 BuildRequires: avahi-devel bison cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3209,6 +3220,23 @@ fi
 %endif
 
 %changelog
+* Fri Oct 29 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-8
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix fuzz error:
+       idl: drsuapi_DsaAddressListItem_V1 limit recursion
+       idl: limit recurion on recursive-elements
+       lib: ldb Limit depth of ldb_parse_tree
+       librpc: ndr add recursion check macros
+       librpc: ndr Heap-buffer-overflow in lzxpress_decompress
+       librpc: ndr NDR_PULL_ALIGN check for unsigned overflow
+       lzxpress: add bounds checking to lzxpress decompress
+       lzxpress: avoid technically undefined shift
+       pidl: Add recursive depth checks
+       utils: asn1 avoid undefined behaviour
+       witness: idl fix length calculation for witness_IPaddrInfoList
+
 * Mon Oct 25 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-7
 - Type:cves
 - ID:CVE-2021-3671
