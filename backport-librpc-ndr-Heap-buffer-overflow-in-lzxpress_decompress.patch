@@ -1,0 +1,208 @@
+From ae6927e4f08dcea89729d8e54363e98effab6624 Mon Sep 17 00:00:00 2001
+From: Gary Lockyer <gary@catalyst.net.nz>
+Date: Fri, 24 Jan 2020 10:41:35 +1300
+Subject: [PATCH] librpc ndr: Heap-buffer-overflow in lzxpress_decompress
+
+Reproducer for oss-fuzz Issue 20083
+
+Project: samba
+Fuzzing Engine: libFuzzer
+Fuzz Target: fuzz_ndr_drsuapi_TYPE_OUT
+Job Type: libfuzzer_asan_samba
+Platform Id: linux
+
+Crash Type: Heap-buffer-overflow READ 1
+Crash Address: 0x6040000002fd
+Crash State:
+  lzxpress_decompress
+    ndr_pull_compression_xpress_chunk
+      ndr_pull_compression_start
+
+Sanitizer: address (ASAN)
+
+Recommended Security Severity: Medium
+
+Credit to OSS-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=20083
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=14236
+
+Signed-off-by: Gary Lockyer <gary@catalyst.net.nz>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+---
+ librpc/ndr/libndr.h                    |  5 +-
+ librpc/tests/test_ndr.c                | 84 ++++++++++++++++++++++++++
+ librpc/wscript_build                   |  8 +++
+ python/samba/tests/blackbox/ndrdump.py | 13 ++++
+ selftest/knownfail.d/bug-14236         |  1 +
+ source4/selftest/tests.py              |  2 +
+ 6 files changed, 112 insertions(+), 1 deletion(-)
+ create mode 100644 librpc/tests/test_ndr.c
+ create mode 100644 selftest/knownfail.d/bug-14236
+
+diff --git a/librpc/ndr/libndr.h b/librpc/ndr/libndr.h
+index 58ef517d363..b7cccf3dfc5 100644
+--- a/librpc/ndr/libndr.h
++++ b/librpc/ndr/libndr.h
+@@ -309,7 +309,10 @@ enum ndr_compression_alg {
+ } while (0)
+ 
+ #define NDR_PULL_NEED_BYTES(ndr, n) do { \
+-	if (unlikely((n) > ndr->data_size || ndr->offset + (n) > ndr->data_size)) { \
++	if (unlikely(\
++		(n) > ndr->data_size || \
++		ndr->offset + (n) > ndr->data_size || \
++		ndr->offset + (n) < ndr->offset)) { \
+ 		if (ndr->flags & LIBNDR_FLAG_INCOMPLETE_BUFFER) { \
+ 			uint32_t _available = ndr->data_size - ndr->offset; \
+ 			uint32_t _missing = n - _available; \
+diff --git a/librpc/tests/test_ndr.c b/librpc/tests/test_ndr.c
+new file mode 100644
+index 00000000000..1c074d71023
+--- /dev/null
++++ b/librpc/tests/test_ndr.c
+@@ -0,0 +1,84 @@
++/*
++ * Tests for librpc ndr functions
++ *
++ * Copyright (C) Catalyst.NET Ltd 2020
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ */
++
++/*
++ * from cmocka.c:
++ * These headers or their equivalents should be included prior to
++ * including
++ * this header file.
++ *
++ * #include <stdarg.h>
++ * #include <stddef.h>
++ * #include <setjmp.h>
++ *
++ * This allows test applications to use custom definitions of C standard
++ * library functions and types.
++ *
++ */
++#include <stdarg.h>
++#include <stddef.h>
++#include <stdint.h>
++#include <setjmp.h>
++#include <cmocka.h>
++
++#include "librpc/ndr/libndr.h"
++
++/*
++ * Test NDR_PULL_NEED_BYTES integer overflow handling.
++ */
++static enum ndr_err_code wrap_NDR_PULL_NEED_BYTES(
++	struct ndr_pull *ndr,
++	uint32_t bytes) {
++
++	NDR_PULL_NEED_BYTES(ndr, bytes);
++	return NDR_ERR_SUCCESS;
++}
++
++static void test_NDR_PULL_NEED_BYTES(void **state)
++{
++	struct ndr_pull ndr = {0};
++	enum ndr_err_code err;
++
++	ndr.data_size = UINT32_MAX;
++	ndr.offset = UINT32_MAX -1;
++
++	/*
++	 * This will not cause an overflow
++	 */
++	err = wrap_NDR_PULL_NEED_BYTES(&ndr, 1);
++	assert_int_equal(NDR_ERR_SUCCESS, err);
++
++	/*
++	 * This will cause an overflow
++	 * and (offset + n) will be less than data_size
++	 */
++	err = wrap_NDR_PULL_NEED_BYTES(&ndr, 2);
++	assert_int_equal(NDR_ERR_BUFSIZE, err);
++}
++
++int main(int argc, const char **argv)
++{
++	const struct CMUnitTest tests[] = {
++		cmocka_unit_test(test_NDR_PULL_NEED_BYTES),
++	};
++
++	cmocka_set_message_output(CM_OUTPUT_SUBUNIT);
++	return cmocka_run_group_tests(tests, NULL, NULL);
++}
+diff --git a/librpc/wscript_build b/librpc/wscript_build
+index 5eb78e6010a8..ec8697fbcc58 100644
+--- a/librpc/wscript_build
++++ b/librpc/wscript_build
+@@ -698,3 +698,11 @@ bld.SAMBA_BINARY('test_ndr_string',
+                       ndr_nbt
+                       ''',
+                  for_selftest=True)
++
++bld.SAMBA_BINARY('test_ndr',
++                 source='tests/test_ndr.c',
++                 deps='''
++                      cmocka
++                      ndr
++                      ''',
++                 for_selftest=True)
+diff --git a/python/samba/tests/blackbox/ndrdump.py b/python/samba/tests/blackbox/ndrdump.py
+index b3c837819b15..205519c3f8a6 100644
+--- a/python/samba/tests/blackbox/ndrdump.py
++++ b/python/samba/tests/blackbox/ndrdump.py
+@@ -437,3 +437,16 @@ def test_fuzzed_drsuapi_DsGetNCChanges(self):
+         except BlackboxProcessError as e:
+             self.fail(e)
+         self.assertEqual(actual, expected)
++
++    def test_ndrdump_fuzzed_ndr_compression(self):
++        expected = 'pull returned Buffer Size Error'
++        command = (
++            "ndrdump drsuapi 3 out --base64-input "
++            "--input BwAAAAcAAAAGAAAAAwAgICAgICAJAAAAICAgIAkAAAAgIAAA//////8=")
++        try:
++            actual = self.check_exit_code(command, 2)
++        except BlackboxProcessError as e:
++            self.fail(e)
++        # check_output will return bytes
++        # convert expected to bytes for python 3
++        self.assertRegex(actual.decode('utf8'), expected + '$')
+diff --git a/selftest/knownfail.d/bug-14236 b/selftest/knownfail.d/bug-14236
+new file mode 100644
+index 00000000000..64b956997a6
+--- /dev/null
++++ b/selftest/knownfail.d/bug-14236
+@@ -0,0 +1 @@
++^samba.tests.blackbox.ndrdump.samba.tests.blackbox.ndrdump.NdrDumpTests.test_ndrdump_fuzzed_ndr_compression
+diff --git a/source4/selftest/tests.py b/source4/selftest/tests.py
+index f570d35dfba..ab2c4f69da0 100755
+--- a/source4/selftest/tests.py
++++ b/source4/selftest/tests.py
+@@ -1334,6 +1334,8 @@ plantestsuite("libcli.drsuapi.repl_decrypt", "none",
+               [os.path.join(bindir(), "test_ldap_message")])
+ plantestsuite("librpc.ndr.ndr_macros", "none",
+               [os.path.join(bindir(), "test_ndr_macros")])
++plantestsuite("librpc.ndr.ndr", "none",
++              [os.path.join(bindir(), "test_ndr")])
+ 
+ # process restart and limit tests, these break the environment so need to run
+ # in their own specific environment
+-- 
+GitLab
+

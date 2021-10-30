@@ -1,0 +1,35 @@
+From 0c461f3bd589764c496b530f698e313df50667e6 Mon Sep 17 00:00:00 2001
+From: Douglas Bagnall <douglas.bagnall@catalyst.net.nz>
+Date: Thu, 6 Aug 2020 17:17:01 +1200
+Subject: [PATCH] lzxpress: avoid technically undefined shift
+
+UBSAN:
+
+  runtime error: left shift of 1 by 31 places cannot be represented in type 'int'
+
+Credit to OSS-fuzz.
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=22283
+
+Signed-off-by: Douglas Bagnall <douglas.bagnall@catalyst.net.nz>
+Reviewed-by: Gary Lockyer <gary@catalyst.net.nz>
+
+Autobuild-User(master): Jeremy Allison <jra@samba.org>
+Autobuild-Date(master): Mon Aug 31 22:31:13 UTC 2020 on sn-devel-184
+---
+ lib/compression/lzxpress.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/compression/lzxpress.c b/lib/compression/lzxpress.c
+index d8326304455c..3453dd36f2aa 100644
+--- a/lib/compression/lzxpress.c
++++ b/lib/compression/lzxpress.c
+@@ -180,7 +180,7 @@ ssize_t lzxpress_compress(const uint8_t *uncompressed,
+ 				}
+ 			}
+ 
+-			indic |= 1 << (32 - ((indic_bit % 32) + 1));
++			indic |= 1U << (32 - ((indic_bit % 32) + 1));
+ 
+ 			if (best_len > 9) {
+ 				if (nibble_index == 0) {

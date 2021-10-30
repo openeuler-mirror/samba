@@ -1,0 +1,52 @@
+From 5d323f2a2e36c23a007d93394f25df0f3d30942d Mon Sep 17 00:00:00 2001
+From: Gary Lockyer <gary@catalyst.net.nz>
+Date: Thu, 30 Jan 2020 08:51:47 +1300
+Subject: [PATCH] pidl: Add recursive depth checks.
+
+Add new parameter to elements "max_recursion" and modify pidl to call
+NDR_RECURSION_CHECK and NDR_RECURSION_UNWIND for element tagged with
+that attribute.
+
+Credit to OSS-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19820
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=14254
+
+Signed-off-by: Gary Lockyer <gary@catalyst.net.nz>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+---
+ pidl/lib/Parse/Pidl/NDR.pm               | 1 +
+ pidl/lib/Parse/Pidl/Samba4/NDR/Parser.pm | 7 +++++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/pidl/lib/Parse/Pidl/NDR.pm b/pidl/lib/Parse/Pidl/NDR.pm
+index 44338a1298d8..d17d0b404ed0 100644
+--- a/pidl/lib/Parse/Pidl/NDR.pm
++++ b/pidl/lib/Parse/Pidl/NDR.pm
+@@ -1101,6 +1101,7 @@ my %property_list = (
+ 	"gensize"		=> ["TYPEDEF", "STRUCT", "UNION"],
+ 	"value"			=> ["ELEMENT"],
+ 	"flag"			=> ["ELEMENT", "TYPEDEF", "STRUCT", "UNION", "ENUM", "BITMAP", "PIPE"],
++	"max_recursion"		=> ["ELEMENT"],
+ 
+ 	# generic
+ 	"public"		=> ["FUNCTION", "TYPEDEF", "STRUCT", "UNION", "ENUM", "BITMAP", "PIPE"],
+diff --git a/pidl/lib/Parse/Pidl/Samba4/NDR/Parser.pm b/pidl/lib/Parse/Pidl/Samba4/NDR/Parser.pm
+index 0d58cb5f03d5..119590f66969 100644
+--- a/pidl/lib/Parse/Pidl/Samba4/NDR/Parser.pm
++++ b/pidl/lib/Parse/Pidl/Samba4/NDR/Parser.pm
+@@ -993,7 +993,14 @@ sub ParseDataPull($$$$$$$)
+ 
+ 		$var_name = get_pointer_to($var_name);
+ 
++		if (my $depth = has_property($e, "max_recursion")) {
++			my $d = parse_int($depth);
++			$self->pidl("NDR_RECURSION_CHECK($ndr, $d);");
++		}
+ 		$self->pidl("NDR_CHECK(".TypeFunctionName("ndr_pull", $l->{DATA_TYPE})."($ndr, $ndr_flags, $var_name));");
++		if (has_property($e, "max_recursion")) {
++			$self->pidl("NDR_RECURSION_UNWIND($ndr);");
++		}
+ 
+ 		my $pl = GetPrevLevel($e, $l);
+ 

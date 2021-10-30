@@ -1,0 +1,50 @@
+From 8cce23acb9f9bdde8bff3c3a7ffa83361e3a64a6 Mon Sep 17 00:00:00 2001
+From: Stefan Metzmacher <metze@samba.org>
+Date: Fri, 31 Jul 2020 11:27:25 +0200
+Subject: [PATCH] witness.idl: fix length calculation for
+ witness_IPaddrInfoList
+
+If r->num is 0, we should not dereference r->addr.
+
+Using ndr_size_witness_IPaddrInfoList() also make this much simpler
+and avoids the magic 12.
+
+Credit Oss-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=22175
+REF: https://oss-fuzz.com/testcase-detail/5686294157197312
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=14452
+
+Signed-off-by: Stefan Metzmacher <metze@samba.org>
+Reviewed-by: Samuel Cabrero <scabrero@samba.org>
+---
+ librpc/idl/witness.idl        |  6 +++---
+ source4/torture/ndr/witness.c | 24 ------------------------
+ 2 files changed, 3 insertions(+), 27 deletions(-)
+
+diff --git a/librpc/idl/witness.idl b/librpc/idl/witness.idl
+index e230a5ea709..652c0e9cb65 100644
+--- a/librpc/idl/witness.idl
++++ b/librpc/idl/witness.idl
+@@ -98,14 +98,14 @@ interface witness
+ 		WITNESS_IPADDR_OFFLINE = 0x10
+ 	} witness_IPaddrInfo_flags;
+ 
+-	typedef [flag(NDR_NOALIGN|NDR_LITTLE_ENDIAN),gensize] struct {
++	typedef [flag(NDR_NOALIGN|NDR_LITTLE_ENDIAN)] struct {
+ 		witness_IPaddrInfo_flags flags;
+ 		[flag(NDR_BIG_ENDIAN)] ipv4address ipv4;
+ 		[flag(NDR_BIG_ENDIAN)] ipv6address ipv6;
+ 	} witness_IPaddrInfo;
+ 
+-	typedef [flag(NDR_NOALIGN|NDR_LITTLE_ENDIAN)] struct {
+-		[value(12+(r->num*ndr_size_witness_IPaddrInfo(r->addr, ndr->flags)))] uint32 length;
++	typedef [public,flag(NDR_NOALIGN|NDR_LITTLE_ENDIAN),gensize] struct {
++		[value(ndr_size_witness_IPaddrInfoList(r, ndr->flags))] uint32 length;
+ 		[value(0)] uint32 reserved;
+ 		uint32 num;
+ 		witness_IPaddrInfo addr[num];
+-- 
+GitLab
+

@@ -1,0 +1,40 @@
+From 6d05fb3ea772c3642624ec6e0fb4e8d099bcdb8e Mon Sep 17 00:00:00 2001
+From: Gary Lockyer <gary@catalyst.net.nz>
+Date: Wed, 22 Jan 2020 14:16:02 +1300
+Subject: [PATCH] librpc ndr: NDR_PULL_ALIGN check for unsigned overflow
+
+Handle uint32 overflow in NDR_PULL_ALIGN
+
+Credit to OSS-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=20083
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=14236
+
+Signed-off-by: Gary Lockyer <gary@catalyst.net.nz>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+---
+ librpc/ndr/libndr.h            | 7 +++++++
+ selftest/knownfail.d/bug-14236 | 1 -
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/librpc/ndr/libndr.h b/librpc/ndr/libndr.h
+index b7cccf3dfc5..c2c7e263049 100644
+--- a/librpc/ndr/libndr.h
++++ b/librpc/ndr/libndr.h
+@@ -331,6 +331,13 @@ enum ndr_compression_alg {
+ 		if (unlikely(ndr->flags & LIBNDR_FLAG_PAD_CHECK)) {	\
+ 			ndr_check_padding(ndr, n); \
+ 		} \
++		if(unlikely( \
++			((ndr->offset + (n-1)) & (~(n-1))) < ndr->offset)) {\
++			return ndr_pull_error( \
++				ndr, \
++				NDR_ERR_BUFSIZE, \
++				"Pull align (overflow) %u", (unsigned)n); \
++		} \
+ 		ndr->offset = (ndr->offset + (n-1)) & ~(n-1); \
+ 	} \
+ 	if (unlikely(ndr->offset > ndr->data_size)) {			\
+-- 
+GitLab
+

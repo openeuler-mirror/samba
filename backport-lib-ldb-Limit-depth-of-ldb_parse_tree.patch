@@ -1,0 +1,300 @@
+From a699256f438527455aaff6c73c88ee87ac7083ef Mon Sep 17 00:00:00 2001
+From: Gary Lockyer <gary@catalyst.net.nz>
+Date: Tue, 21 Apr 2020 15:37:40 +1200
+Subject: [PATCH] lib ldb: Limit depth of ldb_parse_tree
+
+Limit the number of nested conditionals allowed by ldb_parse tree to
+128, to avoid potential stack overflow issues.
+
+Credit Oss-Fuzz
+
+REF: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19508
+
+Signed-off-by: Gary Lockyer <gary@catalyst.net.nz>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+
+Autobuild-User(master): Gary Lockyer <gary@samba.org>
+Autobuild-Date(master): Sun May 10 23:21:08 UTC 2020 on sn-devel-184
+---
+ lib/ldb/common/ldb_parse.c     | 72 +++++++++++++++++++++++------
+ lib/ldb/tests/ldb_parse_test.c | 83 +++++++++++++++++++++++++++++++++-
+ 2 files changed, 140 insertions(+), 15 deletions(-)
+
+diff --git a/lib/ldb/common/ldb_parse.c b/lib/ldb/common/ldb_parse.c
+index 452c5830ed5..7e15206b168 100644
+--- a/lib/ldb/common/ldb_parse.c
++++ b/lib/ldb/common/ldb_parse.c
+@@ -43,6 +43,16 @@
+ #include "ldb_private.h"
+ #include "system/locale.h"
+ 
++/*
++ * Maximum depth of the filter parse tree, the value chosen is small enough to
++ * avoid triggering ASAN stack overflow checks. But large enough to be useful.
++ *
++ * On Windows clients the maximum number of levels of recursion allowed is 100.
++ * In the LDAP server, Windows restricts clients to 512 nested
++ * (eg) OR statements.
++ */
++#define LDB_MAX_PARSE_TREE_DEPTH 128
++
+ static int ldb_parse_hex2char(const char *x)
+ {
+ 	if (isxdigit(x[0]) && isxdigit(x[1])) {
+@@ -231,7 +241,11 @@ static struct ldb_val **ldb_wildcard_decode(TALLOC_CTX *mem_ctx, const char *str
+ 	return ret;
+ }
+ 
+-static struct ldb_parse_tree *ldb_parse_filter(TALLOC_CTX *mem_ctx, const char **s);
++static struct ldb_parse_tree *ldb_parse_filter(
++	TALLOC_CTX *mem_ctx,
++	const char **s,
++	unsigned depth,
++	unsigned max_depth);
+ 
+ 
+ /*
+@@ -498,7 +512,11 @@ static struct ldb_parse_tree *ldb_parse_simple(TALLOC_CTX *mem_ctx, const char *
+   <or> ::= '|' <filterlist>
+   <filterlist> ::= <filter> | <filter> <filterlist>
+ */
+-static struct ldb_parse_tree *ldb_parse_filterlist(TALLOC_CTX *mem_ctx, const char **s)
++static struct ldb_parse_tree *ldb_parse_filterlist(
++	TALLOC_CTX *mem_ctx,
++	const char **s,
++	unsigned depth,
++	unsigned max_depth)
+ {
+ 	struct ldb_parse_tree *ret, *next;
+ 	enum ldb_parse_op op;
+@@ -533,7 +551,8 @@ static struct ldb_parse_tree *ldb_parse_filterlist(TALLOC_CTX *mem_ctx, const ch
+ 		return NULL;
+ 	}
+ 
+-	ret->u.list.elements[0] = ldb_parse_filter(ret->u.list.elements, &p);
++	ret->u.list.elements[0] =
++		ldb_parse_filter(ret->u.list.elements, &p, depth, max_depth);
+ 	if (!ret->u.list.elements[0]) {
+ 		talloc_free(ret);
+ 		return NULL;
+@@ -547,7 +566,8 @@ static struct ldb_parse_tree *ldb_parse_filterlist(TALLOC_CTX *mem_ctx, const ch
+ 			break;
+ 		}
+ 
+-		next = ldb_parse_filter(ret->u.list.elements, &p);
++		next = ldb_parse_filter(
++			ret->u.list.elements, &p, depth, max_depth);
+ 		if (next == NULL) {
+ 			/* an invalid filter element */
+ 			talloc_free(ret);
+@@ -576,7 +596,11 @@ static struct ldb_parse_tree *ldb_parse_filterlist(TALLOC_CTX *mem_ctx, const ch
+ /*
+   <not> ::= '!' <filter>
+ */
+-static struct ldb_parse_tree *ldb_parse_not(TALLOC_CTX *mem_ctx, const char **s)
++static struct ldb_parse_tree *ldb_parse_not(
++	TALLOC_CTX *mem_ctx,
++	const char **s,
++	unsigned depth,
++	unsigned max_depth)
+ {
+ 	struct ldb_parse_tree *ret;
+ 	const char *p = *s;
+@@ -593,7 +617,7 @@ static struct ldb_parse_tree *ldb_parse_not(TALLOC_CTX *mem_ctx, const char **s)
+ 	}
+ 
+ 	ret->operation = LDB_OP_NOT;
+-	ret->u.isnot.child = ldb_parse_filter(ret, &p);
++	ret->u.isnot.child = ldb_parse_filter(ret, &p, depth, max_depth);
+ 	if (!ret->u.isnot.child) {
+ 		talloc_free(ret);
+ 		return NULL;
+@@ -608,7 +632,11 @@ static struct ldb_parse_tree *ldb_parse_not(TALLOC_CTX *mem_ctx, const char **s)
+   parse a filtercomp
+   <filtercomp> ::= <and> | <or> | <not> | <simple>
+ */
+-static struct ldb_parse_tree *ldb_parse_filtercomp(TALLOC_CTX *mem_ctx, const char **s)
++static struct ldb_parse_tree *ldb_parse_filtercomp(
++	TALLOC_CTX *mem_ctx,
++	const char **s,
++	unsigned depth,
++	unsigned max_depth)
+ {
+ 	struct ldb_parse_tree *ret;
+ 	const char *p = *s;
+@@ -617,15 +645,15 @@ static struct ldb_parse_tree *ldb_parse_filtercomp(TALLOC_CTX *mem_ctx, const ch
+ 
+ 	switch (*p) {
+ 	case '&':
+-		ret = ldb_parse_filterlist(mem_ctx, &p);
++		ret = ldb_parse_filterlist(mem_ctx, &p, depth, max_depth);
+ 		break;
+ 
+ 	case '|':
+-		ret = ldb_parse_filterlist(mem_ctx, &p);
++		ret = ldb_parse_filterlist(mem_ctx, &p, depth, max_depth);
+ 		break;
+ 
+ 	case '!':
+-		ret = ldb_parse_not(mem_ctx, &p);
++		ret = ldb_parse_not(mem_ctx, &p, depth, max_depth);
+ 		break;
+ 
+ 	case '(':
+@@ -641,21 +669,34 @@ static struct ldb_parse_tree *ldb_parse_filtercomp(TALLOC_CTX *mem_ctx, const ch
+ 	return ret;
+ }
+ 
+-
+ /*
+   <filter> ::= '(' <filtercomp> ')'
+ */
+-static struct ldb_parse_tree *ldb_parse_filter(TALLOC_CTX *mem_ctx, const char **s)
++static struct ldb_parse_tree *ldb_parse_filter(
++	TALLOC_CTX *mem_ctx,
++	const char **s,
++	unsigned depth,
++	unsigned max_depth)
+ {
+ 	struct ldb_parse_tree *ret;
+ 	const char *p = *s;
+ 
++	/*
++	 * Check the depth of the parse tree, and reject the input if
++	 * max_depth exceeded. This avoids stack overflow
++	 * issues.
++	 */
++	if (depth > max_depth) {
++		return NULL;
++	}
++	depth++;
++
+ 	if (*p != '(') {
+ 		return NULL;
+ 	}
+ 	p++;
+ 
+-	ret = ldb_parse_filtercomp(mem_ctx, &p);
++	ret = ldb_parse_filtercomp(mem_ctx, &p, depth, max_depth);
+ 
+ 	if (*p != ')') {
+ 		return NULL;
+@@ -679,6 +720,8 @@ static struct ldb_parse_tree *ldb_parse_filter(TALLOC_CTX *mem_ctx, const char *
+ */
+ struct ldb_parse_tree *ldb_parse_tree(TALLOC_CTX *mem_ctx, const char *s)
+ {
++	unsigned depth = 0;
++
+ 	while (s && isspace((unsigned char)*s)) s++;
+ 
+ 	if (s == NULL || *s == 0) {
+@@ -686,7 +729,8 @@ struct ldb_parse_tree *ldb_parse_tree(TALLOC_CTX *mem_ctx, const char *s)
+ 	}
+ 
+ 	if (*s == '(') {
+-		return ldb_parse_filter(mem_ctx, &s);
++		return ldb_parse_filter(
++			mem_ctx, &s, depth, LDB_MAX_PARSE_TREE_DEPTH);
+ 	}
+ 
+ 	return ldb_parse_simple(mem_ctx, &s);
+diff --git a/lib/ldb/tests/ldb_parse_test.c b/lib/ldb/tests/ldb_parse_test.c
+index a739d7795d1..d7442b954ea 100644
+--- a/lib/ldb/tests/ldb_parse_test.c
++++ b/lib/ldb/tests/ldb_parse_test.c
+@@ -81,10 +81,91 @@ static void test_parse_filtertype(void **state)
+ 	test_roundtrip(ctx, " ", "(|(objectClass=*)(distinguishedName=*))");
+ }
+ 
++/*
++ * Test that a nested query with 128 levels of nesting is accepted
++ */
++static void test_nested_filter_eq_limit(void **state)
++{
++	struct test_ctx *ctx =
++		talloc_get_type_abort(*state, struct test_ctx);
++
++	/*
++	 * 128 nested clauses
++	 */
++	const char *nested_query = ""
++		"(|(!(|(&(|(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(&(|(|(|(|(|(|(!(|(!(|(|(|"
++		"(|(!(|(&(|(|(&(|(|(|(|(|(!(!(!(|"
++		"(|(!(|(&(|(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(&(|(|(|(!(|(|(&(|(|(|(|(|"
++		"(|(!(|(&(|(|(&(|(|(|(|(|(&(&(|(|"
++		"(|(!(|(&(|(|(|(|(|(|(!(|(|(|(|(|"
++		"(|(!(|(&(|(|(!(|(|(|(|(|(|(|(|(|"
++		"(a=b)"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))";
++
++	struct ldb_parse_tree *tree = ldb_parse_tree(ctx, nested_query);
++
++	assert_non_null(tree);
++	/*
++	 * Check that we get the same query back
++	 */
++	test_roundtrip(ctx, nested_query, nested_query);
++}
++
++/*
++ * Test that a nested query with 129 levels of nesting is rejected.
++ */
++static void test_nested_filter_gt_limit(void **state)
++{
++	struct test_ctx *ctx =
++		talloc_get_type_abort(*state, struct test_ctx);
++
++	/*
++	 * 129 nested clauses
++	 */
++	const char *nested_query = ""
++		"(|(!(|(|(&(|(|(|(|(&(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(!(|(|(|(|(!(|(|(|"
++		"(|(!(|(|(&(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(|(!(&(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(|(|(|(|(|(|(|(|(|"
++		"(|(!(|(|(&(|(|(|(|(|(|(|(|(&(|(|"
++		"(|"
++		"(a=b)"
++		")"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))"
++		"))))))))))))))))";
++
++	struct ldb_parse_tree *tree = ldb_parse_tree(ctx, nested_query);
++
++	assert_null(tree);
++}
++
+ int main(int argc, const char **argv)
+ {
+ 	const struct CMUnitTest tests[] = {
+-		cmocka_unit_test_setup_teardown(test_parse_filtertype, setup, teardown),
++		cmocka_unit_test_setup_teardown(
++			test_parse_filtertype, setup, teardown),
++		cmocka_unit_test_setup_teardown(
++			test_nested_filter_eq_limit, setup, teardown),
++		cmocka_unit_test_setup_teardown(
++			test_nested_filter_gt_limit, setup, teardown),
+ 	};
+ 
+ 	cmocka_set_message_output(CM_OUTPUT_SUBUNIT);
+-- 
+GitLab
+
