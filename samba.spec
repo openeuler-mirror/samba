@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        8
+Release:        9
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -86,6 +86,7 @@ Patch16:        backport-lib-ldb-Limit-depth-of-ldb_parse_tree.patch
 Patch17:        backport-witness-idl-fix-length-calculation-for-witness_IPaddrInfoList.patch
 Patch18:        backport-lzxpress-avoid-technically-undefined-shift.patch
 Patch19:        backport-utils-asn1-avoid-undefined-behaviour.patch
+Patch20:        backport-fix-undefined-shift-in-put_res_rec.patch
 
 BuildRequires: avahi-devel bison cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3220,6 +3221,12 @@ fi
 %endif
 
 %changelog
+* Fri Nov 05 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-9
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:fix undefined shift in put_res_rec
+
 * Fri Oct 29 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-8
 - Type:bugfix
 - ID:NA
