@@ -1,0 +1,33 @@
+From 33d4d482718fca10030b5a569f17cb1a2637fc8a Mon Sep 17 00:00:00 2001
+From: Volker Lendecke <vl@samba.org>
+Date: Fri, 3 Jan 2020 12:42:03 +0100
+Subject: [PATCH 2619/6935] winbind: Fix CID 1456624 Uninitialized scalar
+ variable
+
+Coverity does not get that for (rc!=0) gnutls_error_to_ntstatus()
+never returns NT_STATUS_OK
+
+Signed-off-by: Volker Lendecke <vl@samba.org>
+Reviewed-by: Gary Lockyer <gary@catalyst.net.nz>
+Conflict: NA
+Reference: https://git.samba.org/?p=samba.git;a=patch;h=33d4d482718fca10030b5a569f17cb1a2637fc8a
+---
+ source3/winbindd/winbindd_pam.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/source3/winbindd/winbindd_pam.c b/source3/winbindd/winbindd_pam.c
+index 1552eb3ce52..a1c6efe6662 100644
+--- a/source3/winbindd/winbindd_pam.c
++++ b/source3/winbindd/winbindd_pam.c
+@@ -1738,7 +1738,7 @@ static NTSTATUS winbindd_dual_pam_auth_samlogon(
+ 	NTSTATUS result;
+ 	uint8_t authoritative = 0;
+ 	uint32_t flags = 0;
+-	uint16_t validation_level;
++	uint16_t validation_level = 0;
+ 	union netr_Validation *validation = NULL;
+ 	struct netr_SamBaseInfo *base_info = NULL;
+ 	bool ok;
+-- 
+2.23.0
+
