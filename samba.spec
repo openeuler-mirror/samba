@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        6
+Release:        7
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -79,6 +79,33 @@ Patch9:         backport-0001-CVE-2020-14383.patch
 Patch10:        backport-0002-CVE-2020-14383.patch
 Patch11:        backport-CVE-2020-14318.patch
 Patch12:        backport-CVE-2020-14323.patch
+
+Patch6062:       backport-winbind-Fix-CID-1456624-Uninitialized-scalar-variabl.patch
+
+Patch6157:       backport-0001-CVE-2020-25717-winbindd-add-generic-wb_parent_idmap_.patch
+Patch6158:       backport-0002-CVE-2020-25717-wb_xids2sids-make-use-of-the-new-wb_p.patch
+Patch6159:       backport-0003-CVE-2020-25717-wb_sids2xids-call-wb_parent_idmap_set.patch
+Patch6160:       backport-0004-CVE-2020-25717-winbindd-defer-the-setup_child-from-i.patch
+Patch6161:       backport-0005-CVE-2020-25717-wb_sids2xids-build-state-idmap_doms-b.patch
+Patch6162:       backport-0006-CVE-2020-25717-winbindd-allow-idmap-backends-to-mark.patch
+Patch6163:       backport-0007-CVE-2020-25717-s3-idmap_hash-reliable-return-ID_TYPE.patch
+Patch6164:       backport-0008-CVE-2020-25717-winbindd-call-wb_parent_idmap_setup_s.patch
+Patch6165:       backport-0009-CVE-2020-25717-winbind-ensure-wb_parent_idmap_setup_.patch
+Patch6166:       backport-0010-CVE-2020-25717-auth_sam-use-pdb_get_domain_info-to-l.patch
+Patch6167:       backport-0011-CVE-2020-25717-s3-winbindd-make-sure-we-default-to-r.patch
+Patch6168:       backport-0012-CVE-2020-25717-s4-auth-ntlm-make-sure-auth_check_pas.patch
+Patch6169:       backport-0013-CVE-2020-25717-loadparm-Add-new-parameter-min-domain.patch
+Patch6170:       backport-0014-CVE-2020-25717-s3-auth-Check-minimum-domain-uid.patch
+Patch6171:       backport-0015-CVE-2020-25717-s3-auth-we-should-not-try-to-autocrea.patch
+Patch6172:       backport-0016-CVE-2020-25717-s3-auth-no-longer-let-check_account-a.patch
+Patch6173:       backport-0017-CVE-2020-25717-s3-auth-remove-fallbacks-in-smb_getpw.patch
+Patch6174:       backport-0018-CVE-2020-25717-s3-auth-don-t-let-create_local_token-.patch
+Patch6175:       backport-0019-CVE-2020-25719-CVE-2020-25717-auth-gensec-always-req.patch
+Patch6176:       backport-0020-CVE-2020-25717-s3-ntlm_auth-fix-memory-leaks-in-ntlm.patch
+Patch6177:       backport-0021-CVE-2020-25717-s3-ntlm_auth-let-ntlm_auth_generate_s.patch
+Patch6178:       backport-0022-use-set_current_user_info-in-auth3_generate_session_info_p.patch
+Patch6179:       backport-0023-CVE-2020-25717-s3-auth-let-auth3_generate_session_in.patch
+Patch6180:       backport-0024-CVE-2020-25717-s3-auth-let-auth3_generate_session_in.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3066,6 +3093,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Thu Nov 25 2021 majun <majun65@huawei.com> - 4.11.12-7
+- Type:cves
+- ID:CVE-2020-25717
+- SUG:NA
+- DESC:fix CVE-2020-25717
+
 * Tue Oct 26 2021 chxssg <chxssg@qq.com> - 4.11.12-6
 - Type:cves
 - ID:CVE-2020-14318 CVE-2020-14323 CVE-2020-14383 
