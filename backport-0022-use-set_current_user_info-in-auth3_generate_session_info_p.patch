@@ -1,0 +1,52 @@
+From dc4b1e39ce1f2201a2d6ae2d4cffef2448f69a62 Mon Sep 17 00:00:00 2001
+From: Ralph Boehme <slow@samba.org>
+Date: Sat, 18 Jan 2020 08:06:45 +0100
+Subject: [PATCH] s3/auth: use set_current_user_info() in
+ auth3_generate_session_info_pac()
+
+This delays reloading config slightly, but I don't see how could affect
+observable behaviour other then log messages coming from the functions in
+between the different locations for lp_load_with_shares() like
+make_session_info_krb5() are sent to a different logfile if "log file" uses %U.
+
+Signed-off-by: Ralph Boehme <slow@samba.org>
+Reviewed-by: Andreas Schneider <asn@samba.org>
+---
+ source3/auth/auth_generic.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+Conflict:NA
+Reference:https://github.com/samba-team/samba/commit/dc4b1e39ce1f2201a2d6ae2d4cffef2448f69a62
+
+diff --git a/source3/auth/auth_generic.c b/source3/auth/auth_generic.c
+index 9243a0ba02d3..0e9500ac08d1 100644
+--- a/source3/auth/auth_generic.c
++++ b/source3/auth/auth_generic.c
+@@ -159,12 +159,6 @@ static NTSTATUS auth3_generate_session_info_pac(struct auth4_context *auth_ctx,
+ 		}
+ 	}
+ 
+-	/* setup the string used by %U */
+-	sub_set_smb_name(username);
+-
+-	/* reload services so that the new %U is taken into account */
+-	lp_load_with_shares(get_dyn_CONFIGFILE());
+-
+ 	status = make_session_info_krb5(mem_ctx,
+ 					ntuser, ntdomain, username, pw,
+ 					info3_copy, is_guest, is_mapped, NULL /* No session key for now, caller will sort it out */,
+@@ -176,6 +170,14 @@ static NTSTATUS auth3_generate_session_info_pac(struct auth4_context *auth_ctx,
+ 		goto done;
+ 	}
+ 
++	/* setup the string used by %U */
++	set_current_user_info((*session_info)->unix_info->sanitized_username,
++			      (*session_info)->unix_info->unix_name,
++			      (*session_info)->info->domain_name);
++
++	/* reload services so that the new %U is taken into account */
++	lp_load_with_shares(get_dyn_CONFIGFILE());
++
+ 	DEBUG(5, (__location__ "OK: user: %s domain: %s client: %s\n",
+ 		  ntuser, ntdomain, rhost));
+ 
