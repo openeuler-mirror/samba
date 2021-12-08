@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        7
+Release:        8
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -106,6 +106,68 @@ Patch6177:       backport-0021-CVE-2020-25717-s3-ntlm_auth-let-ntlm_auth_generat
 Patch6178:       backport-0022-use-set_current_user_info-in-auth3_generate_session_info_p.patch
 Patch6179:       backport-0023-CVE-2020-25717-s3-auth-let-auth3_generate_session_in.patch
 Patch6180:       backport-0024-CVE-2020-25717-s3-auth-let-auth3_generate_session_in.patch
+Patch6181:       backport-0000-CVE-2020-25721-krb5pac-Add-new-buffers-for-samAccoun.patch
+Patch6182:       backport-0000-CVE-2020-25719-mit-samba-Make-ks_get_principal-inter.patch
+Patch6183:       backport-0001-CVE-2020-25719-mit-samba-Add-ks_free_principal.patch
+Patch6184:       backport-0002-CVE-2020-25719-sign-and-verify-PAC-with-ticket-principal.patch
+Patch6185:       backport-0003-CVE-2020-25719-mit-samba-If-we-use-client_princ-alwa.patch
+Patch6186:       backport-0004-CVE-2020-25719-mit-samba-Add-mit_samba_princ_needs_p.patch
+Patch6187:       backport-0005-CVE-2020-25719-mit-samba-Rework-PAC-handling-in-kdb_.patch
+Patch6188:       backport-0001-CVE-2020-25721-auth-Fill-in-the-new-HAS_SAM_NAME_AND.patch
+Patch6189:       backport-0000-CVE-2016-2124-s4-libcli-sesssetup-don-t-fallback-to-.patch
+Patch6190:       backport-0001-CVE-2016-2124-s3-libsmb-don-t-fallback-to-non-spnego.patch
+Patch6191:       backport-0001-CVE-2020-25722-dsdb-Move-krbtgt-password-setup-after.patch
+Patch6192:       backport-0002-CVE-2020-25722-dsdb-Restrict-the-setting-of-privileg.patch
+Patch6193:       backport-0003-CVE-2020-25722-dsdb-objectclass-computer-becomes-UF_.patch
+Patch6194:       backport-0004-CVE-2020-25722-dsdb-Prohibit-mismatch-between-UF_-ac.patch
+Patch6195:       backport-0005-CVE-2020-25722-dsdb-Add-restrictions-on-computer-acc.patch
+Patch6196:       backport-0006-CVE-2020-25722-samdb-Fill-in-isCriticalSystemObject-.patch
+Patch6197:       backport-0007-CVE-2020-25722-s4-acl-Make-sure-Control-Access-Right.patch
+Patch6198:       backport-0008-CVE-2020-25722-Check-all-elements-in-acl_check_spn-n.patch
+Patch6199:       backport-0009-CVE-2020-25722-Check-for-all-errors-from-acl_check_e.patch
+Patch6200:       backport-0010-CVE-2020-25722-s4-dsdb-cracknames-always-free-tmp_ct.patch
+Patch6201:       backport-0011-CVE-2020-25722-s4-provision-add-host-SPNs-at-the-sta.patch
+Patch6202:       backport-0012-CVE-2020-25722-s4-dsdb-samldb-add-samldb_get_single_.patch
+Patch6203:       backport-0013-CVE-2020-25722-s4-dsdb-samldb-check-for-clashes-in-U.patch
+Patch6204:       backport-0014-CVE-2020-25722-s4-dsdb-samldb-check-sAMAccountName-f.patch
+Patch6205:       backport-0015-CVE-2020-25722-s4-dsdb-samldb-check-for-SPN-uniquene.patch
+Patch6206:       backport-0016-CVE-2020-25722-s4-dsdb-samldb-reject-SPN-with-too-fe.patch
+Patch6207:       backport-0017-CVE-2020-25722-s4-dsdb-modules-add-dsdb_get_expected.patch
+Patch6208:       backport-0018-CVE-2020-25722-s4-dsdb-samldb-samldb_get_single_valu.patch
+Patch6209:       backport-0019-CVE-2020-25722-s4-dsdb-samldb-samldb_sam_accountname.patch
+Patch6210:       backport-0020-CVE-2020-25722-s4-dsdb-samldb-samldb_schema_add_hand.patch
+Patch6211:       backport-0021-CVE-2020-25722-s4-dsdb-samldb-samldb_schema_add_hand.patch
+Patch6212:       backport-0022-CVE-2020-25722-s4-dsdb-samldb-samldb_prim_group_chan.patch
+Patch6213:       backport-0023-CVE-2020-25722-s4-dsdb-samldb-samldb_user_account_co.patch
+Patch6214:       backport-0024-CVE-2020-25722-s4-dsdb-samldb-_user_account_control_.patch
+Patch6215:       backport-0025-CVE-2020-25722-s4-dsdb-samldb-samldb_pwd_last_set_ch.patch
+Patch6216:       backport-0026-CVE-2020-25722-s4-dsdb-samldb-samldb_lockout_time-ch.patch
+Patch6217:       backport-0027-CVE-2020-25722-s4-dsdb-samldb-samldb_group_type_chan.patch
+Patch6218:       backport-0028-CVE-2020-25722-s4-dsdb-samldb-samldb_service_princip.patch
+Patch6219:       backport-0029-CVE-2020-25722-s4-dsdb-samldb-samldb_fsmo_role_owner.patch
+Patch6220:       backport-0030-CVE-2020-25722-s4-dsdb-samldb-samldb_fsmo_role_owner.patch
+Patch6221:       backport-0031-CVE-2020-25722-s4-dsdb-pwd_hash-password_hash_bypass.patch
+Patch6222:       backport-0032-CVE-2020-25722-s4-dsdb-pwd_hash-rework-pwdLastSet-by.patch
+Patch6223:       backport-0033-CVE-2020-25722-Ensure-the-structural-objectclass-can.patch
+Patch6224:       backport-0034-CVE-2020-25722-kdc-Do-not-honour-a-request-for-a-3-p.patch
+Patch6225:       backport-0035-CVE-2020-25722-selftest-Ensure-check-for-duplicate-s.patch
+Patch6226:       backport-0000-CVE-2020-25718-simplify.patch
+Patch6227:       backport-0001-CVE-2020-25718-trailing-chunk-must-match.patch
+Patch6228:       backport-0002-CVE-2020-25718-fix-ldb_comparison_fold.patch
+Patch6229:       backport-0003-CVE-2020-25718-catch-potential-overflow-error.patch
+Patch6230:       backport-0005-CVE-2020-25718-Fix-Message-items-for-a.patch
+Patch6231:       backport-0006-CVE-2020-25718-Change-sid-list.patch
+Patch6232:       backport-0007-CVE-2020-25718-Obtain-the-user.patch
+Patch6233:       backport-0008-CVE-2020-25718-Put-msDS-KrbTgtLinkBL-put-RODC-reveal-never-reveal.patch
+Patch6234:       backport-0009-CVE-2020-25718-Put-msDS-KrbTgtLinkBL.patch
+Patch6235:       backport-0010-CVE-2020-25718-Confirm-that-the-RODC.patch
+Patch6236:       backport-0000-CVE-2021-3738-s4-torture-drsuapi-maintain-priv-admin.patch
+Patch6237:       backport-0001-CVE-2021-3738-s4-rpc_server-common-provide-assoc_gro.patch
+Patch6238:       backport-0002-CVE-2021-3738-s4-rpc_server-drsuapi-make-use-of-asso.patch
+Patch6239:       backport-0003-CVE-2021-3738-s4-rpc_server-dnsserver-make-use-of-dc.patch
+Patch6240:       backport-0004-CVE-2021-3738-s4-rpc_server-lsa-make-use-of-dcesrv_s.patch
+Patch6241:       backport-0005-CVE-2021-3738-s4-rpc_server-netlogon-make-use-of-dce.patch
+Patch6242:       backport-0006-CVE-2021-3738-s4-rpc_server-samr-make-use-of-dcesrv_.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3093,6 +3155,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Wed Dec 08 2021 xihaochen <xihaochen@huawei.com> - 4.11.12-8
+- Type:cves
+- ID:CVE-2020-25718,CVE-2020-25719,CVE-2020-25721,CVE-2020-25722,CVE-2016-2124,CVE-2021-3738
+- SUG:NA
+- DESC:fix CVE-2020-25718,CVE-2020-25719,CVE-2020-25721,CVE-2020-25722,CVE-2016-2124,CVE-2021-3738
+
 * Thu Nov 25 2021 majun <majun65@huawei.com> - 4.11.12-7
 - Type:cves
 - ID:CVE-2020-25717
