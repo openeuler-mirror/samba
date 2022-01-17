@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        1
+Release:        2
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -66,13 +66,16 @@ Source7:        samba.pamd
 
 Source201:      README.downgrade
 
-BuildRequires: avahi-devel bison cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
+BuildRequires: avahi-devel bison dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
 BuildRequires: libcap-devel libicu-devel libcmocka-devel libtirpc-devel libuuid-devel libxslt lmdb ncurses-devel openldap-devel
 BuildRequires: pam-devel perl-interpreter perl-generators perl(Archive::Tar) perl(Test::More) popt-devel python3-devel python3-setuptools quota-devel
 BuildRequires: readline-devel rpcgen rpcsvc-proto-devel sed libtasn1-devel libtasn1-tools xfsprogs-devel xz zlib-devel >= 1.2.3 python3-dns 
 BuildRequires: gcc
 BuildRequires: chrpath
+%if %{?openEuler:1}0
+BuildRequires: cups-devel
+%endif
 
 %if %{with_winexe}
 BuildRequires: mingw32-gcc
@@ -550,6 +553,13 @@ export LDFLAGS="%{__global_ldflags} -fuse-ld=gold"
 
 %configure \
         --enable-fhs \
+%if %{?openEuler:1}0
+        --enable-cups \
+        --enable-iprint \
+%else
+        --disable-cups \
+        --disable-iprint \
+%endif
         --with-piddir=/run \
         --with-sockets-dir=/run/samba \
         --with-modulesdir=%{_libdir}/samba \
@@ -630,8 +640,9 @@ then
     exit -1
 fi
 
-
+%if %{?openEuler:1}0
 touch %{buildroot}%{_libexecdir}/samba/cups_backend_smb
+%endif
 
 # Install other stuff
 install -d -m 0755 %{buildroot}%{_sysconfdir}/logrotate.d
@@ -708,7 +719,9 @@ chrpath -d %{buildroot}%{python3_sitearch}/%{name}/samba3/*.so*
 chrpath -d %{buildroot}%{python3_sitearch}/%{name}/dcerpc/*.so*
 
 find %{buildroot}%{_libexecdir}/ctdb -type f ! -name ctdb_lvs ! -name ctdb_natgw| xargs chrpath -d
+%if %{?openEuler:1}0
 chrpath -d %{buildroot}%{_libexecdir}/%{name}/smbspool_krb5_wrapper
+%endif
 chrpath -d %{buildroot}%{_bindir}/rpcclient
 chrpath -d %{buildroot}%{_bindir}/smbclient
 chrpath -d %{buildroot}%{_bindir}/regshell
@@ -886,15 +899,19 @@ fi
 
 %post client
 /sbin/ldconfig
+%if %{?openEuler:1}0
 %{_sbindir}/update-alternatives --install %{_libexecdir}/samba/cups_backend_smb \
     cups_backend_smb \
     %{_bindir}/smbspool 10
+%endif
 
 %postun client
 /sbin/ldconfig
+%if %{?openEuler:1}0
 if [ $1 -eq 0 ] ; then
     %{_sbindir}/update-alternatives --remove cups_backend_smb %{_bindir}/smbspool
 fi
+%endif
 
 %if %{with_dc}
 %ldconfig_scriptlets -n python3-samba-dc
@@ -916,15 +933,19 @@ fi
 %endif
 
 %post krb5-printing
+%if %{?openEuler:1}0
 %{_sbindir}/update-alternatives --install %{_libexecdir}/samba/cups_backend_smb \
 	cups_backend_smb \
 	%{_libexecdir}/samba/smbspool_krb5_wrapper 50
+%endif
 /sbin/ldconfig
 
 %postun krb5-printing
+%if %{?openEuler:1}0
 if [ $1 -eq 0 ] ; then
 	%{_sbindir}/update-alternatives --remove cups_backend_smb %{_libexecdir}/samba/smbspool_krb5_wrapper
 fi
+%endif
 /sbin/ldconfig
 
 %ldconfig_scriptlets libs
@@ -1159,8 +1180,10 @@ fi
 %{_bindir}/smbspool
 %{_bindir}/smbtar
 %{_bindir}/smbtree
+%if %{?openEuler:1}0
 %dir %{_libexecdir}/samba
 %ghost %{_libexecdir}/samba/cups_backend_smb
+%endif
 
 
 %{_libdir}/libdcerpc-binding.so.*
@@ -1560,7 +1583,9 @@ fi
 %endif
 
 %files krb5-printing
+%if %{?openEuler:1}0
 %attr(0700,root,root) %{_libexecdir}/samba/smbspool_krb5_wrapper
+%endif
 %config(noreplace) /etc/ld.so.conf.d/*
 
 %if %with_libsmbclient
@@ -3353,6 +3378,12 @@ fi
 %endif
 
 %changelog
+* Mon Jan 17 2022 gaihuiying <gaihuiying1@huawei.com> - 4.15.3-2
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:add "openEuler" macro to control if cups is needed
+
 * Fri Dec 24 2021 yanglu <yanglu72@huawei.com> - 4.15.3-1
 - Type:bugfix
 - ID:NA
