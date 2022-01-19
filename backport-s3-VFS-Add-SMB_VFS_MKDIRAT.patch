@@ -1,0 +1,243 @@
+From ca3bc7809949c593fd545047a898348d2f5c4da4 Mon Sep 17 00:00:00 2001
+From: Jeremy Allison <jra@samba.org>
+Date: Wed, 4 Sep 2019 12:20:46 -0700
+Subject: [PATCH] s3: VFS: Add SMB_VFS_MKDIRAT().
+
+Currently identical to SMB_VFS_MKDIR().
+
+Next, add to all VFS modules that implement
+mkdir and eventually remove mkdir.
+
+Signed-off-by: Jeremy Allison <jra@samba.org>
+Reviewed-by: Ralph Boehme <slow@samba.org>
+---
+ examples/VFS/skel_opaque.c            | 10 ++++++++++
+ examples/VFS/skel_transparent.c       | 12 ++++++++++++
+ source3/include/smbprofile.h          |  1 +
+ source3/include/vfs.h                 | 13 +++++++++++++
+ source3/include/vfs_macros.h          |  5 +++++
+ source3/modules/vfs_default.c         | 28 +++++++++++++++++++++++++++
+ source3/modules/vfs_not_implemented.c | 10 ++++++++++
+ source3/smbd/vfs.c                    | 12 ++++++++++++
+ 8 files changed, 91 insertions(+)
+
+diff --git a/examples/VFS/skel_opaque.c b/examples/VFS/skel_opaque.c
+index 5a18268e6f47..a4bfe81966b6 100644
+--- a/examples/VFS/skel_opaque.c
++++ b/examples/VFS/skel_opaque.c
+@@ -173,6 +173,15 @@ static int skel_mkdir(vfs_handle_struct *handle,
+ 	return -1;
+ }
+ 
++static int skel_mkdirat(vfs_handle_struct *handle,
++		struct files_struct *dirfsp,
++		const struct smb_filename *smb_fname,
++		mode_t mode)
++{
++	errno = ENOSYS;
++	return -1;
++}
++
+ static int skel_rmdir(vfs_handle_struct *handle,
+ 		const struct smb_filename *smb_fname)
+ {
+@@ -1051,6 +1060,7 @@ static struct vfs_fn_pointers skel_opaque_fns = {
+ 	.telldir_fn = skel_telldir,
+ 	.rewind_dir_fn = skel_rewind_dir,
+ 	.mkdir_fn = skel_mkdir,
++	.mkdirat_fn = skel_mkdirat,
+ 	.rmdir_fn = skel_rmdir,
+ 	.closedir_fn = skel_closedir,
+ 
+diff --git a/examples/VFS/skel_transparent.c b/examples/VFS/skel_transparent.c
+index 654c0e6ca851..b827d2ff77cc 100644
+--- a/examples/VFS/skel_transparent.c
++++ b/examples/VFS/skel_transparent.c
+@@ -171,6 +171,17 @@ static int skel_mkdir(vfs_handle_struct *handle,
+ 	return SMB_VFS_NEXT_MKDIR(handle, smb_fname, mode);
+ }
+ 
++static int skel_mkdirat(vfs_handle_struct *handle,
++		struct files_struct *dirfsp,
++		const struct smb_filename *smb_fname,
++		mode_t mode)
++{
++	return SMB_VFS_NEXT_MKDIRAT(handle,
++			dirfsp,
++			smb_fname,
++			mode);
++}
++
+ static int skel_rmdir(vfs_handle_struct *handle,
+ 		const struct smb_filename *smb_fname)
+ {
+@@ -1333,6 +1344,7 @@ static struct vfs_fn_pointers skel_transparent_fns = {
+ 	.telldir_fn = skel_telldir,
+ 	.rewind_dir_fn = skel_rewind_dir,
+ 	.mkdir_fn = skel_mkdir,
++	.mkdirat_fn = skel_mkdirat,
+ 	.rmdir_fn = skel_rmdir,
+ 	.closedir_fn = skel_closedir,
+ 
+diff --git a/source3/include/smbprofile.h b/source3/include/smbprofile.h
+index fc8945b8bc8b..e1b933ea2dda 100644
+--- a/source3/include/smbprofile.h
++++ b/source3/include/smbprofile.h
+@@ -49,6 +49,7 @@ struct tevent_context;
+ 	SMBPROFILE_STATS_BASIC(syscall_telldir) \
+ 	SMBPROFILE_STATS_BASIC(syscall_rewinddir) \
+ 	SMBPROFILE_STATS_BASIC(syscall_mkdir) \
++	SMBPROFILE_STATS_BASIC(syscall_mkdirat) \
+ 	SMBPROFILE_STATS_BASIC(syscall_rmdir) \
+ 	SMBPROFILE_STATS_BASIC(syscall_closedir) \
+ 	SMBPROFILE_STATS_BASIC(syscall_open) \
+diff --git a/source3/include/vfs.h b/source3/include/vfs.h
+index 6c741e09919c..9ecc0e554970 100644
+--- a/source3/include/vfs.h
++++ b/source3/include/vfs.h
+@@ -701,6 +702,10 @@ struct vfs_fn_pointers {
+ 	int (*mkdir_fn)(struct vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname,
+ 			mode_t mode);
++	int (*mkdirat_fn)(struct vfs_handle_struct *handle,
++			struct files_struct *dirfsp,
++			const struct smb_filename *smb_fname,
++			mode_t mode);
+ 	int (*rmdir_fn)(struct vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname);
+ 	int (*closedir_fn)(struct vfs_handle_struct *handle, DIR *dir);
+@@ -1208,6 +1213,10 @@ void smb_vfs_call_rewind_dir(struct vfs_handle_struct *handle,
+ int smb_vfs_call_mkdir(struct vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname,
+ 			mode_t mode);
++int smb_vfs_call_mkdirat(struct vfs_handle_struct *handle,
++			struct files_struct *dirfsp,
++			const struct smb_filename *smb_fname,
++			mode_t mode);
+ int smb_vfs_call_rmdir(struct vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname);
+ int smb_vfs_call_closedir(struct vfs_handle_struct *handle,
+@@ -1655,6 +1664,10 @@ void vfs_not_implemented_rewind_dir(vfs_handle_struct *handle, DIR *dirp);
+ int vfs_not_implemented_mkdir(vfs_handle_struct *handle,
+ 		const struct smb_filename *smb_fname,
+ 		mode_t mode);
++int vfs_not_implemented_mkdirat(vfs_handle_struct *handle,
++		struct files_struct *dirfsp,
++		const struct smb_filename *smb_fname,
++		mode_t mode);
+ int vfs_not_implemented_rmdir(vfs_handle_struct *handle,
+ 		const struct smb_filename *smb_fname);
+ int vfs_not_implemented_closedir(vfs_handle_struct *handle, DIR *dir);
+diff --git a/source3/include/vfs_macros.h b/source3/include/vfs_macros.h
+index c43a7e5a4b53..a093a08ee118 100644
+--- a/source3/include/vfs_macros.h
++++ b/source3/include/vfs_macros.h
+@@ -114,6 +114,11 @@
+ #define SMB_VFS_NEXT_MKDIR(handle, smb_fname, mode) \
+ 	smb_vfs_call_mkdir((handle)->next,(smb_fname), (mode))
+ 
++#define SMB_VFS_MKDIRAT(conn, dirfsp, smb_fname, mode) \
++	smb_vfs_call_mkdirat((conn)->vfs_handles,(dirfsp), (smb_fname), (mode))
++#define SMB_VFS_NEXT_MKDIRAT(handle, dirfsp, smb_fname, mode) \
++	smb_vfs_call_mkdirat((handle)->next,(dirfsp), (smb_fname), (mode))
++
+ #define SMB_VFS_RMDIR(conn, smb_fname) \
+ 	smb_vfs_call_rmdir((conn)->vfs_handles, (smb_fname))
+ #define SMB_VFS_NEXT_RMDIR(handle, smb_fname) \
+diff --git a/source3/modules/vfs_default.c b/source3/modules/vfs_default.c
+index bb7eba40df93..2e353e5da75c 100644
+--- a/source3/modules/vfs_default.c
++++ b/source3/modules/vfs_default.c
+@@ -517,6 +517,33 @@ static int vfswrap_mkdir(vfs_handle_struct *handle,
+ 	return result;
+ }
+ 
++static int vfswrap_mkdirat(vfs_handle_struct *handle,
++			struct files_struct *dirfsp,
++			const struct smb_filename *smb_fname,
++			mode_t mode)
++{
++	int result;
++	const char *path = smb_fname->base_name;
++	char *parent = NULL;
++
++	START_PROFILE(syscall_mkdirat);
++
++	SMB_ASSERT(dirfsp == dirfsp->conn->cwd_fsp);
++
++	if (lp_inherit_acls(SNUM(handle->conn))
++	    && parent_dirname(talloc_tos(), path, &parent, NULL)
++	    && directory_has_default_acl(handle->conn, parent)) {
++		mode = (0777 & lp_directory_mask(SNUM(handle->conn)));
++	}
++
++	TALLOC_FREE(parent);
++
++	result = mkdirat(dirfsp->fh->fd, path, mode);
++
++	END_PROFILE(syscall_mkdirat);
++	return result;
++}
++
+ static int vfswrap_rmdir(vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname)
+ {
+@@ -3460,6 +3487,7 @@ static struct vfs_fn_pointers vfs_default_fns = {
+ 	.telldir_fn = vfswrap_telldir,
+ 	.rewind_dir_fn = vfswrap_rewinddir,
+ 	.mkdir_fn = vfswrap_mkdir,
++	.mkdirat_fn = vfswrap_mkdirat,
+ 	.rmdir_fn = vfswrap_rmdir,
+ 	.closedir_fn = vfswrap_closedir,
+ 
+diff --git a/source3/modules/vfs_not_implemented.c b/source3/modules/vfs_not_implemented.c
+index 6009abd8d7e2..9fa143a67295 100644
+--- a/source3/modules/vfs_not_implemented.c
++++ b/source3/modules/vfs_not_implemented.c
+@@ -170,6 +170,15 @@ int vfs_not_implemented_mkdir(vfs_handle_struct *handle,
+ 	return -1;
+ }
+ 
++int vfs_not_implemented_mkdirat(vfs_handle_struct *handle,
++		struct files_struct *dirfsp,
++		const struct smb_filename *smb_fname,
++		mode_t mode)
++{
++	errno = ENOSYS;
++	return -1;
++}
++
+ int vfs_not_implemented_rmdir(vfs_handle_struct *handle,
+ 		const struct smb_filename *smb_fname)
+ {
+@@ -1055,6 +1064,7 @@ static struct vfs_fn_pointers vfs_not_implemented_fns = {
+ 	.telldir_fn = vfs_not_implemented_telldir,
+ 	.rewind_dir_fn = vfs_not_implemented_rewind_dir,
+ 	.mkdir_fn = vfs_not_implemented_mkdir,
++	.mkdirat_fn = vfs_not_implemented_mkdirat,
+ 	.rmdir_fn = vfs_not_implemented_rmdir,
+ 	.closedir_fn = vfs_not_implemented_closedir,
+ 
+diff --git a/source3/smbd/vfs.c b/source3/smbd/vfs.c
+index a131b3303d58..836fcf41e657 100644
+--- a/source3/smbd/vfs.c
++++ b/source3/smbd/vfs.c
+@@ -1588,6 +1588,18 @@ int smb_vfs_call_mkdir(struct vfs_handle_struct *handle,
+ 	return handle->fns->mkdir_fn(handle, smb_fname, mode);
+ }
+ 
++int smb_vfs_call_mkdirat(struct vfs_handle_struct *handle,
++			struct files_struct *dirfsp,
++			const struct smb_filename *smb_fname,
++			mode_t mode)
++{
++	VFS_FIND(mkdirat);
++	return handle->fns->mkdirat_fn(handle,
++			dirfsp,
++			smb_fname,
++			mode);
++}
++
+ int smb_vfs_call_rmdir(struct vfs_handle_struct *handle,
+ 			const struct smb_filename *smb_fname)
+ {

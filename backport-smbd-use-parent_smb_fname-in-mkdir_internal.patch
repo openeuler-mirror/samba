@@ -1,0 +1,47 @@
+From 90a198bcd0a7c2b76f474de1f95f5dc39882c3ec Mon Sep 17 00:00:00 2001
+From: Ralph Boehme <slow@samba.org>
+Date: Tue, 28 Apr 2020 16:47:44 +0200
+Subject: [PATCH] smbd: use parent_smb_fname() in mkdir_internal()
+
+Signed-off-by: Ralph Boehme <slow@samba.org>
+Reviewed-by: Jeremy Allison <jra@samba.org>
+---
+ source3/smbd/open.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/source3/smbd/open.c b/source3/smbd/open.c
+index 71be6a4966f3..ea7f66f82cf4 100644
+--- a/source3/smbd/open.c
++++ b/source3/smbd/open.c
+@@ -4065,12 +4065,14 @@ static NTSTATUS mkdir_internal(connection_struct *conn,
+ 			       uint32_t file_attributes)
+ {
+ 	mode_t mode;
++	struct smb_filename *parent_dir_fname = NULL;
+ 	char *parent_dir = NULL;
+ 	NTSTATUS status;
+ 	bool posix_open = false;
+ 	bool need_re_stat = false;
+ 	uint32_t access_mask = SEC_DIR_ADD_SUBDIR;
+ 	int ret;
++	bool ok;
+ 
+ 	if (!CAN_WRITE(conn) || (access_mask & ~(conn->share_access))) {
+ 		DEBUG(5,("mkdir_internal: failing share access "
+@@ -4078,10 +4080,14 @@ static NTSTATUS mkdir_internal(connection_struct *conn,
+ 		return NT_STATUS_ACCESS_DENIED;
+ 	}
+ 
+-	if (!parent_dirname(talloc_tos(), smb_dname->base_name, &parent_dir,
+-			    NULL)) {
++	ok = parent_smb_fname(talloc_tos(),
++			      smb_dname,
++			      &parent_dir_fname,
++			      NULL);
++	if (!ok) {
+ 		return NT_STATUS_NO_MEMORY;
+ 	}
++	parent_dir = parent_dir_fname->base_name;
+ 
+ 	if (file_attributes & FILE_FLAG_POSIX_SEMANTICS) {
+ 		posix_open = true;
