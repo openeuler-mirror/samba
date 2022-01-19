@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        6
+Release:        7
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -168,6 +168,15 @@ Patch6239:       backport-0003-CVE-2021-3738-s4-rpc_server-dnsserver-make-use-of
 Patch6240:       backport-0004-CVE-2021-3738-s4-rpc_server-lsa-make-use-of-dcesrv_s.patch
 Patch6241:       backport-0005-CVE-2021-3738-s4-rpc_server-netlogon-make-use-of-dce.patch
 Patch6242:       backport-0006-CVE-2021-3738-s4-rpc_server-samr-make-use-of-dcesrv_.patch
+Patch6243:       backport-s3-lib-add-parent_smb_fname.patch
+Patch6244:       backport-smbd-use-parent_smb_fname-in-check_parent_access.patch
+Patch6245:       backport-smbd-use-parent_smb_fname-in-inherit_new_acl.patch
+Patch6246:       backport-s3-VFS-Add-SMB_VFS_MKDIRAT.patch
+Patch6247:       backport-vfs_full_audit-pass-conn-to-smb_fname_str_do_log.patch
+Patch6248:       backport-s3-VFS-change-connection_struct-cwd_fname-to-cwd_fsp.patch
+Patch6249:       backport-s3-smbd-Change-mkdir_internal-to-call-SMB_VFS_MKDIRAT.patch
+Patch6250:       backport-smbd-use-parent_smb_fname-in-mkdir_internal.patch
+Patch6251:       backport-CVE-2021-43566.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3154,6 +3163,21 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Wed Jan 19 2022 gaihuiying <gaihuiying1@huawei.com> - 4.11.12-7
+- Type:cves
+- ID:CVE-2021-43566
+- SUG:NA
+- DESC:backport patches to fix CVE-2021-43566:
+       s3/lib: add parent_smb_fname function
+       smbd: use parent_smb_fname in check_parent_access
+       smbd: use parent_smb_fname in inherit_new_acl
+       s3/VFS: Add SMB_VFS_MKDIRAT
+       vfs_full_audit: pass conn to smb_fname_str_do_log
+       s3/VFS: change connection_struct cwd_fname to cwd_fsp
+       s3/smbd: Change mkdir_internal to call SMB_VFS_MKDIRAT
+       smbd: use parent_smb_fname in mkdir_internal
+       fix CVE-2021-43566
+
 * Thu Dec 09 2021 xihaochen <xihaochen@huawei.com> - 4.11.12-6
 - Type:cves
 - ID:CVE-2020-25717,CVE-2020-25718,CVE-2020-25719,CVE-2020-25721,CVE-2020-25722,CVE-2016-2124,CVE-2021-3738
