@@ -1,0 +1,40 @@
+From 99e04578e35d630930e03ee1120b2a432a0edccd Mon Sep 17 00:00:00 2001
+From: Jeremy Allison <jra@samba.org>
+Date: Fri, 6 Sep 2019 15:05:36 -0700
+Subject: [PATCH] s3: smbd: Change mkdir_internal() to call SMB_VFS_MKDIRAT().
+
+Use conn->cwd_fsp as current fsp.
+
+No logic change for now.
+
+Signed-off-by: Jeremy Allison <jra@samba.org>
+Reviewed-by: Ralph Boehme <slow@samba.org>
+---
+ source3/smbd/open.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/source3/smbd/open.c b/source3/smbd/open.c
+index c9c9c474472d..e6a1c8327e9f 100644
+--- a/source3/smbd/open.c
++++ b/source3/smbd/open.c
+@@ -3776,6 +3776,7 @@ static NTSTATUS mkdir_internal(connection_struct *conn,
+ 	bool posix_open = false;
+ 	bool need_re_stat = false;
+ 	uint32_t access_mask = SEC_DIR_ADD_SUBDIR;
++	int ret;
+ 
+ 	if (!CAN_WRITE(conn) || (access_mask & ~(conn->share_access))) {
+ 		DEBUG(5,("mkdir_internal: failing share access "
+@@ -3807,7 +3808,11 @@ static NTSTATUS mkdir_internal(connection_struct *conn,
+ 		return status;
+ 	}
+ 
+-	if (SMB_VFS_MKDIR(conn, smb_dname, mode) != 0) {
++	ret = SMB_VFS_MKDIRAT(conn,
++			conn->cwd_fsp,
++			smb_dname,
++			mode);
++	if (ret != 0) {
+ 		return map_nt_error_from_unix(errno);
+ 	}
+ 
