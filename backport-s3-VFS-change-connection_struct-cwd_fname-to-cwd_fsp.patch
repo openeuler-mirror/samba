@@ -1,0 +1,435 @@
+From 75f98a19537c4d0791108ebfea82f3f9d4606cb3 Mon Sep 17 00:00:00 2001
+From: Ralph Boehme <slow@samba.org>
+Date: Thu, 15 Aug 2019 15:53:32 +0200
+Subject: [PATCH] s3: VFS: change connection_struct cwd_fname to cwd_fsp
+
+Pair-Programmed-With: Stefan Metzmacher <metze@samba.org>
+Signed-off-by: Ralph Boehme <slow@samba.org>
+Reviewed-by: Jeremy Allison <jra@samba.org>
+---
+ source3/include/vfs.h                    |  2 +-
+ source3/modules/vfs_ceph.c               |  6 +++---
+ source3/modules/vfs_full_audit.c         |  4 ++--
+ source3/modules/vfs_netatalk.c           | 14 ++++++------
+ source3/modules/vfs_preopen.c            |  2 +-
+ source3/modules/vfs_virusfilter.c        | 18 ++++++++--------
+ source3/modules/vfs_virusfilter_clamav.c |  2 +-
+ source3/modules/vfs_virusfilter_fsav.c   |  2 +-
+ source3/modules/vfs_virusfilter_sophos.c |  2 +-
+ source3/modules/vfs_virusfilter_utils.c  |  2 +-
+ source3/smbd/conn.c                      | 15 +++++++++++++
+ source3/smbd/service.c                   |  8 +++----
+ source3/smbd/uid.c                       |  2 +-
+ source3/smbd/vfs.c                       | 27 +++++++++++++++---------
+ 14 files changed, 64 insertions(+), 42 deletions(-)
+
+diff --git a/source3/include/vfs.h b/source3/include/vfs.h
+index aec9546681be..d3e6ec258c32 100644
+--- a/source3/include/vfs.h
++++ b/source3/include/vfs.h
+@@ -475,7 +475,7 @@ typedef struct connection_struct {
+ 	enum timestamp_set_resolution ts_res;
+ 	char *connectpath;
+ 	char *origpath;
+-	struct smb_filename *cwd_fname; /* Working directory. */
++	struct files_struct *cwd_fsp; /* Working directory. */
+ 	bool tcon_done;
+ 
+ 	struct vfs_handle_struct *vfs_handles;		/* for the new plugins */
+diff --git a/source3/modules/vfs_ceph.c b/source3/modules/vfs_ceph.c
+index 28363f003c22..bdf1f5128cf5 100644
+--- a/source3/modules/vfs_ceph.c
++++ b/source3/modules/vfs_ceph.c
+@@ -1200,14 +1200,14 @@ static struct smb_filename *cephwrap_realpath(struct vfs_handle_struct *handle,
+ 	} else if ((len >= 2) && (path[0] == '.') && (path[1] == '/')) {
+ 		if (len == 2) {
+ 			r = asprintf(&result, "%s",
+-					handle->conn->cwd_fname->base_name);
++					handle->conn->cwd_fsp->fsp_name->base_name);
+ 		} else {
+ 			r = asprintf(&result, "%s/%s",
+-					handle->conn->cwd_fname->base_name, &path[2]);
++					handle->conn->cwd_fsp->fsp_name->base_name, &path[2]);
+ 		}
+ 	} else {
+ 		r = asprintf(&result, "%s/%s",
+-				handle->conn->cwd_fname->base_name, path);
++				handle->conn->cwd_fsp->fsp_name->base_name, path);
+ 	}
+ 
+ 	if (r < 0) {
+diff --git a/source3/modules/vfs_full_audit.c b/source3/modules/vfs_full_audit.c
+index 80d15f25ac6b..7a2e15d59601 100644
+--- a/source3/modules/vfs_full_audit.c
++++ b/source3/modules/vfs_full_audit.c
+@@ -680,11 +680,11 @@ static const char *smb_fname_str_do_log(struct connection_struct *conn,
+ 		if (!ISDOT(smb_fname->base_name)) {
+ 			abs_name = talloc_asprintf(do_log_ctx(),
+ 					"%s/%s",
+-					conn->cwd_fname->base_name,
++					conn->cwd_fsp->fsp_name->base_name,
+ 					smb_fname->base_name);
+ 		} else {
+ 			abs_name = talloc_strdup(do_log_ctx(),
+-					conn->cwd_fname->base_name);
++					conn->cwd_fsp->fsp_name->base_name);
+ 		}
+ 		if (abs_name == NULL) {
+ 			return "";
+diff --git a/source3/modules/vfs_netatalk.c b/source3/modules/vfs_netatalk.c
+index 3085cf4c7c9a..ebdf8d249b62 100644
+--- a/source3/modules/vfs_netatalk.c
++++ b/source3/modules/vfs_netatalk.c
+@@ -234,7 +234,7 @@ static int atalk_rmdir(struct vfs_handle_struct *handle,
+ 	const char *path = smb_fname->base_name;
+ 	char *dpath;
+ 
+-	if (!handle->conn->cwd_fname->base_name || !path) goto exit_rmdir;
++	if (!handle->conn->cwd_fsp->fsp_name->base_name || !path) goto exit_rmdir;
+ 
+ 	/* due to there is no way to change bDeleteVetoFiles variable
+ 	 * from this module, gotta use talloc stuff..
+@@ -246,7 +246,7 @@ static int atalk_rmdir(struct vfs_handle_struct *handle,
+ 		goto exit_rmdir;
+ 
+ 	if (!(dpath = talloc_asprintf(ctx, "%s/%s%s", 
+-	  handle->conn->cwd_fname->base_name, path, add ? "/"APPLEDOUBLE : "")))
++	  handle->conn->cwd_fsp->fsp_name->base_name, path, add ? "/"APPLEDOUBLE : "")))
+ 		goto exit_rmdir;
+ 
+ 	atalk_rrmdir(ctx, dpath);
+@@ -277,7 +277,7 @@ static int atalk_rename(struct vfs_handle_struct *handle,
+ 		return ret;
+ 	}
+ 
+-	if (atalk_build_paths(talloc_tos(), handle->conn->cwd_fname->base_name, oldname,
++	if (atalk_build_paths(talloc_tos(), handle->conn->cwd_fsp->fsp_name->base_name, oldname,
+ 			      &adbl_path, &orig_path, &adbl_info,
+ 			      &orig_info) != 0)
+ 		goto exit_rename;
+@@ -339,7 +339,7 @@ static int atalk_unlink(struct vfs_handle_struct *handle,
+ 	}
+ 
+ 	if (atalk_build_paths(talloc_tos(),
+-				handle->conn->cwd_fname->base_name, path,
++				handle->conn->cwd_fsp->fsp_name->base_name, path,
+ 			      &adbl_path, &orig_path,
+ 			      &adbl_info, &orig_info) != 0)
+ 		goto exit_unlink;
+@@ -376,7 +376,7 @@ static int atalk_chmod(struct vfs_handle_struct *handle,
+ 		return ret;
+ 
+ 	ret1 = atalk_build_paths(ctx,
+-			handle->conn->cwd_fname->base_name,
++			handle->conn->cwd_fsp->fsp_name->base_name,
+ 			smb_fname->base_name,
+ 			&adbl_path,
+ 			&orig_path,
+@@ -415,7 +415,7 @@ static int atalk_chown(struct vfs_handle_struct *handle,
+ 	if (!(ctx = talloc_init("chown_file")))
+ 		return ret;
+ 
+-	if (atalk_build_paths(ctx, handle->conn->cwd_fname->base_name,
++	if (atalk_build_paths(ctx, handle->conn->cwd_fsp->fsp_name->base_name,
+ 				smb_fname->base_name,
+ 				&adbl_path, &orig_path,
+ 				&adbl_info, &orig_info) != 0)
+@@ -452,7 +452,7 @@ static int atalk_lchown(struct vfs_handle_struct *handle,
+ 	if (!(ctx = talloc_init("lchown_file")))
+ 		return ret;
+ 
+-	if (atalk_build_paths(ctx, handle->conn->cwd_fname->base_name,
++	if (atalk_build_paths(ctx, handle->conn->cwd_fsp->fsp_name->base_name,
+ 				smb_fname->base_name,
+ 				&adbl_path, &orig_path,
+ 				&adbl_info, &orig_info) != 0)
+diff --git a/source3/modules/vfs_preopen.c b/source3/modules/vfs_preopen.c
+index 4a6816129eda..e7cdf9e47768 100644
+--- a/source3/modules/vfs_preopen.c
++++ b/source3/modules/vfs_preopen.c
+@@ -415,7 +415,7 @@ static int preopen_open(vfs_handle_struct *handle,
+ 	TALLOC_FREE(state->template_fname);
+ 	state->template_fname = talloc_asprintf(
+ 		state, "%s/%s",
+-		fsp->conn->cwd_fname->base_name, smb_fname->base_name);
++		fsp->conn->cwd_fsp->fsp_name->base_name, smb_fname->base_name);
+ 
+ 	if (state->template_fname == NULL) {
+ 		return res;
+diff --git a/source3/modules/vfs_virusfilter.c b/source3/modules/vfs_virusfilter.c
+index 0b4bc724f3a3..fcf0c2debc97 100644
+--- a/source3/modules/vfs_virusfilter.c
++++ b/source3/modules/vfs_virusfilter.c
+@@ -579,7 +579,7 @@ static virusfilter_action infected_file_action_quarantine(
+ {
+ 	TALLOC_CTX *frame = talloc_stackframe();
+ 	connection_struct *conn = handle->conn;
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	char *fname = fsp->fsp_name->base_name;
+ 	const struct smb_filename *smb_fname = fsp->fsp_name;
+ 	struct smb_filename *q_smb_fname = NULL;
+@@ -696,7 +696,7 @@ static virusfilter_action infected_file_action_rename(
+ {
+ 	TALLOC_CTX *frame = talloc_stackframe();
+ 	connection_struct *conn = handle->conn;
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	char *fname = fsp->fsp_name->base_name;
+ 	const struct smb_filename *smb_fname = fsp->fsp_name;
+ 	struct smb_filename *q_smb_fname = NULL;
+@@ -784,7 +784,7 @@ static virusfilter_action infected_file_action_delete(
+ 	unbecome_root();
+ 	if (ret == -1) {
+ 		DBG_ERR("Delete [%s/%s] failed: %s\n",
+-			fsp->conn->cwd_fname->base_name,
++			fsp->conn->cwd_fsp->fsp_name->base_name,
+ 			fsp->fsp_name->base_name,
+ 			strerror(saved_errno));
+ 		errno = saved_errno;
+@@ -837,7 +837,7 @@ static virusfilter_action virusfilter_treat_infected_file(
+ 	bool is_cache)
+ {
+ 	connection_struct *conn = handle->conn;
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	char *fname = fsp->fsp_name->base_name;
+ 	TALLOC_CTX *mem_ctx = talloc_tos();
+ 	int i;
+@@ -937,7 +937,7 @@ static void virusfilter_treat_scan_error(
+ 	bool is_cache)
+ {
+ 	connection_struct *conn = handle->conn;
+-	const char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	const char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	const char *fname = fsp->fsp_name->base_name;
+ 	TALLOC_CTX *mem_ctx = talloc_tos();
+ 	char *env_list = NULL;
+@@ -1003,7 +1003,7 @@ static virusfilter_result virusfilter_scan(
+ 	virusfilter_result scan_result;
+ 	char *scan_report = NULL;
+ 	const char *fname = fsp->fsp_name->base_name;
+-	const char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	const char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	struct virusfilter_cache_entry *scan_cache_e = NULL;
+ 	bool is_cache = false;
+ 	virusfilter_action file_action = VIRUSFILTER_ACTION_DO_NOTHING;
+@@ -1138,7 +1138,7 @@ static int virusfilter_vfs_open(
+ {
+ 	TALLOC_CTX *mem_ctx = talloc_tos();
+ 	struct virusfilter_config *config;
+-	const char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	const char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	virusfilter_result scan_result;
+ 	const char *fname = fsp->fsp_name->base_name;
+ 	char *dir_name = NULL;
+@@ -1435,7 +1435,7 @@ static int virusfilter_vfs_unlink(
+ 	int ret = SMB_VFS_NEXT_UNLINK(handle, smb_fname);
+ 	struct virusfilter_config *config = NULL;
+ 	char *fname = NULL;
+-	char *cwd_fname = handle->conn->cwd_fname->base_name;
++	char *cwd_fname = handle->conn->cwd_fsp->fsp_name->base_name;
+ 
+ 	if (ret != 0 && errno != ENOENT) {
+ 		return ret;
+@@ -1465,7 +1465,7 @@ static int virusfilter_vfs_rename(
+ 	struct virusfilter_config *config = NULL;
+ 	char *fname = NULL;
+ 	char *dst_fname = NULL;
+-	char *cwd_fname = handle->conn->cwd_fname->base_name;
++	char *cwd_fname = handle->conn->cwd_fsp->fsp_name->base_name;
+ 
+ 	if (ret != 0) {
+ 		return ret;
+diff --git a/source3/modules/vfs_virusfilter_clamav.c b/source3/modules/vfs_virusfilter_clamav.c
+index d0e1fc081b7a..fb93caeded66 100644
+--- a/source3/modules/vfs_virusfilter_clamav.c
++++ b/source3/modules/vfs_virusfilter_clamav.c
+@@ -81,7 +81,7 @@ static virusfilter_result virusfilter_clamav_scan(
+ 	const struct files_struct *fsp,
+ 	char **reportp)
+ {
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	const char *fname = fsp->fsp_name->base_name;
+ 	size_t filepath_len = strlen(cwd_fname) + 1 /* slash */ + strlen(fname);
+ 	struct virusfilter_io_handle *io_h = config->io_h;
+diff --git a/source3/modules/vfs_virusfilter_fsav.c b/source3/modules/vfs_virusfilter_fsav.c
+index bd22ee58bc45..240940c75c89 100644
+--- a/source3/modules/vfs_virusfilter_fsav.c
++++ b/source3/modules/vfs_virusfilter_fsav.c
+@@ -301,7 +301,7 @@ static virusfilter_result virusfilter_fsav_scan(
+ 	const struct files_struct *fsp,
+ 	char **reportp)
+ {
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	const char *fname = fsp->fsp_name->base_name;
+ 	struct virusfilter_io_handle *io_h = config->io_h;
+ 	virusfilter_result result = VIRUSFILTER_RESULT_CLEAN;
+diff --git a/source3/modules/vfs_virusfilter_sophos.c b/source3/modules/vfs_virusfilter_sophos.c
+index 82f9cbce7494..c8cdec5fd7fc 100644
+--- a/source3/modules/vfs_virusfilter_sophos.c
++++ b/source3/modules/vfs_virusfilter_sophos.c
+@@ -226,7 +226,7 @@ static virusfilter_result virusfilter_sophos_scan(
+ 	const struct files_struct *fsp,
+ 	char **reportp)
+ {
+-	char *cwd_fname = fsp->conn->cwd_fname->base_name;
++	char *cwd_fname = fsp->conn->cwd_fsp->fsp_name->base_name;
+ 	const char *fname = fsp->fsp_name->base_name;
+ 	char fileurl[VIRUSFILTER_IO_URL_MAX+1];
+ 	int fileurl_len, fileurl_len2;
+diff --git a/source3/modules/vfs_virusfilter_utils.c b/source3/modules/vfs_virusfilter_utils.c
+index f56fc6ed5d8b..f1a7a9ba6cbe 100644
+--- a/source3/modules/vfs_virusfilter_utils.c
++++ b/source3/modules/vfs_virusfilter_utils.c
+@@ -977,7 +977,7 @@ int virusfilter_shell_set_conn_env(
+ 	virusfilter_env_set(mem_ctx, env_list, "VIRUSFILTER_SERVICE_NAME",
+ 			    lp_const_servicename(snum));
+ 	virusfilter_env_set(mem_ctx, env_list, "VIRUSFILTER_SERVICE_PATH",
+-			    conn->cwd_fname->base_name);
++			    conn->cwd_fsp->fsp_name->base_name);
+ 
+ 	client_addr_p = tsocket_address_inet_addr_string(
+ 				conn->sconn->remote_address, talloc_tos());
+diff --git a/source3/smbd/conn.c b/source3/smbd/conn.c
+index ca973b0d6aa6..6d9ea419f8df 100644
+--- a/source3/smbd/conn.c
++++ b/source3/smbd/conn.c
+@@ -90,8 +90,23 @@ connection_struct *conn_new(struct smbd_server_connection *sconn)
+ 		TALLOC_FREE(conn);
+ 		return NULL;
+ 	}
++	conn->cwd_fsp = talloc_zero(conn, struct files_struct);
++	if (conn->cwd_fsp == NULL) {
++		DBG_ERR("talloc_zero failed\n");
++		TALLOC_FREE(conn);
++		return NULL;
++	}
++	conn->cwd_fsp->fh = talloc_zero(conn->cwd_fsp, struct fd_handle);
++	if (conn->cwd_fsp->fh == NULL) {
++		DBG_ERR("talloc_zero failed\n");
++		TALLOC_FREE(conn);
++		return NULL;
++	}
+ 	conn->sconn = sconn;
+ 	conn->force_group_gid = (gid_t)-1;
++	conn->cwd_fsp->fh->fd = -1;
++	conn->cwd_fsp->fnum = FNUM_FIELD_INVALID;
++	conn->cwd_fsp->conn = conn;
+ 
+ 	DLIST_ADD(sconn->connections, conn);
+ 	sconn->num_connections++;
+diff --git a/source3/smbd/service.c b/source3/smbd/service.c
+index 732cd237b66e..fa84d78ab3b4 100644
+--- a/source3/smbd/service.c
++++ b/source3/smbd/service.c
+@@ -72,16 +72,16 @@ bool set_conn_connectpath(connection_struct *conn, const char *connectpath)
+ 	talloc_free(conn->connectpath);
+ 	conn->connectpath = destname;
+ 	/*
+-	 * Ensure conn->cwd_fname is initialized.
++	 * Ensure conn->cwd_fsp->fsp_name is initialized.
+ 	 * start as conn->connectpath.
+ 	 */
+-	TALLOC_FREE(conn->cwd_fname);
+-	conn->cwd_fname = synthetic_smb_fname(conn,
++	TALLOC_FREE(conn->cwd_fsp->fsp_name);
++	conn->cwd_fsp->fsp_name = synthetic_smb_fname(conn,
+ 				conn->connectpath,
+ 				NULL,
+ 				NULL,
+ 				0);
+-	if (conn->cwd_fname == NULL) {
++	if (conn->cwd_fsp->fsp_name == NULL) {
+ 		return false;
+ 	}
+ 	return true;
+diff --git a/source3/smbd/uid.c b/source3/smbd/uid.c
+index a4bcb747d37e..53c7aa7b7980 100644
+--- a/source3/smbd/uid.c
++++ b/source3/smbd/uid.c
+@@ -581,7 +581,7 @@ static void pop_conn_ctx(void)
+ 	if (current_user.done_chdir && ctx_p->need_chdir) {
+ 		int ret;
+ 
+-		ret = vfs_ChDir(ctx_p->conn, ctx_p->conn->cwd_fname);
++		ret = vfs_ChDir(ctx_p->conn, ctx_p->conn->cwd_fsp->fsp_name);
+ 		if (ret != 0) {
+ 			DBG_ERR("vfs_ChDir() failed!\n");
+ 			smb_panic("vfs_ChDir() failed!\n");
+diff --git a/source3/smbd/vfs.c b/source3/smbd/vfs.c
+index b8b482e758ef..467c3e39db1e 100644
+--- a/source3/smbd/vfs.c
++++ b/source3/smbd/vfs.c
+@@ -787,7 +787,7 @@ const char *vfs_readdirname(connection_struct *conn, void *p,
+ int vfs_ChDir(connection_struct *conn, const struct smb_filename *smb_fname)
+ {
+ 	int ret;
+-	struct smb_filename *old_cwd = conn->cwd_fname;
++	struct smb_filename *cwd = NULL;
+ 
+ 	if (!LastDir) {
+ 		LastDir = SMB_STRDUP("");
+@@ -810,14 +810,14 @@ int vfs_ChDir(connection_struct *conn, const struct smb_filename *smb_fname)
+ 	}
+ 
+ 	/*
+-	 * Always replace conn->cwd_fname. We
++	 * Always replace conn->cwd_fsp. We
+ 	 * don't know if it's been modified by
+ 	 * VFS modules in the stack.
+ 	 */
+ 
+ 	/* conn cache. */
+-	conn->cwd_fname = vfs_GetWd(conn, conn);
+-	if (conn->cwd_fname == NULL) {
++	cwd = vfs_GetWd(conn, conn);
++	if (cwd == NULL) {
+ 		/*
+ 		 * vfs_GetWd() failed.
+ 		 * We must be able to read cwd.
+@@ -826,7 +826,7 @@ int vfs_ChDir(connection_struct *conn, const struct smb_filename *smb_fname)
+ 		 */
+ 		int saved_errno = errno;
+ 
+-		if (old_cwd == NULL) {
++		if (conn->cwd_fsp->fsp_name == NULL) {
+ 			/*
+ 			 * Failed on the very first chdir()+getwd()
+ 			 * for this connection. We can't
+@@ -836,11 +836,9 @@ int vfs_ChDir(connection_struct *conn, const struct smb_filename *smb_fname)
+ 			/* NOTREACHED */
+ 			return -1;
+ 		}
+-		/* Restore original conn->cwd_fname. */
+-		conn->cwd_fname = old_cwd;
+ 
+ 		/* Return to the previous $cwd. */
+-		ret = SMB_VFS_CHDIR(conn, conn->cwd_fname);
++		ret = SMB_VFS_CHDIR(conn, conn->cwd_fsp->fsp_name);
+ 		if (ret != 0) {
+ 			smb_panic("conn->cwd getwd failed\n");
+ 			/* NOTREACHED */
+@@ -856,9 +854,18 @@ int vfs_ChDir(connection_struct *conn, const struct smb_filename *smb_fname)
+ 	SAFE_FREE(LastDir);
+ 	LastDir = SMB_STRDUP(smb_fname->base_name);
+ 
+-	DEBUG(4,("vfs_ChDir got %s\n", conn->cwd_fname->base_name));
++	/*
++	 * (Indirect) Callers of vfs_ChDir() may still hold references to the
++	 * old conn->cwd_fsp->fsp_name. Move it to talloc_tos(), that way
++	 * callers can use it for the lifetime of the SMB request.
++	 */
++	talloc_move(talloc_tos(), &conn->cwd_fsp->fsp_name);
++
++	conn->cwd_fsp->fsp_name = talloc_move(conn->cwd_fsp, &cwd);
++	conn->cwd_fsp->fh->fd = AT_FDCWD;
++
++	DBG_INFO("vfs_ChDir got %s\n", fsp_str_dbg(conn->cwd_fsp));
+ 
+-	TALLOC_FREE(old_cwd);
+ 	return ret;
+ }
+ 
