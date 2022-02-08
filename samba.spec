@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.11.12
-Release:        8
+Release:        9
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -177,6 +177,11 @@ Patch6248:       backport-s3-VFS-change-connection_struct-cwd_fname-to-cwd_fsp.p
 Patch6249:       backport-s3-smbd-Change-mkdir_internal-to-call-SMB_VFS_MKDIRAT.patch
 Patch6250:       backport-smbd-use-parent_smb_fname-in-mkdir_internal.patch
 Patch6251:       backport-CVE-2021-43566.patch
+Patch6252:       backport-0001-CVE-2021-44142.patch
+Patch6253:       backport-0002-CVE-2021-44142.patch
+Patch6254:       backport-0003-CVE-2021-44142.patch
+Patch6255:       backport-0004-CVE-2021-44142.patch
+Patch6256:       backport-0005-CVE-2021-44142.patch
 
 BuildRequires: avahi-devel cups-devel dbus-devel docbook-style-xsl e2fsprogs-devel gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3164,6 +3169,12 @@ fi
 %{_mandir}/man*
 
 %changelog
+* Tue Feb 08 2022 gaihuiying <eaglegai@163.com> - 4.11.12-9
+- Type:cves
+- ID:CVE-2021-44142
+- SUG:NA
+- DESC:backport to fix CVE-2021-44142
+
 * Thu Jan 20 2022 gaihuiying <gaihuiying1@huawei.com> - 4.11.12-8
 - Type:cves
 - ID:CVE-2021-43566
