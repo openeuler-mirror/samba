@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.12.5
-Release:        9
+Release:        10
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -555,7 +555,9 @@ zcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
 
 export python_LDFLAGS="$(echo %{__global_ldflags} | sed -e 's/-Wl,-z,defs//g')"
 
+%ifnarch riscv64
 export LDFLAGS="%{__global_ldflags} -fuse-ld=gold"
+%endif
 
 
 %configure \
@@ -602,7 +604,11 @@ export LDFLAGS="%{__global_ldflags} -fuse-ld=gold"
         --systemd-winbind-extra=%{_systemd_extra} \
         --systemd-samba-extra=%{_systemd_extra}
 
+%ifarch riscv64
+make -O V=1 VERBOSE=1
+%else
 %make_build
+%endif
 
 pushd pidl
 %__perl Makefile.PL PREFIX=%{_prefix}
@@ -3221,6 +3227,10 @@ fi
 %endif
 
 %changelog
+* Sat Feb 26 2022 YukariChiba <i@0x7f.cc> - 4.12.5-10
+- Do not use gold when building on RISC-V
+- Disable smpflag in make to keep active in building on RISC-V
+
 * Fri Nov 05 2021 gaihuiying <gaihuiying1@huawei.com> - 4.12.5-9
 - Type:bugfix
 - ID:NA
