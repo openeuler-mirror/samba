@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        3
+Release:        4
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -722,6 +722,7 @@ chrpath -d %{buildroot}%{_libdir}/%{name}/gensec/*.so*
 chrpath -d %{buildroot}%{_libdir}/%{name}/bind9/*.so*
 chrpath -d %{buildroot}%{_libdir}/security/*.so*
 chrpath -d %{buildroot}%{_libdir}/krb5/plugins/kdb/samba.so
+chrpath -d %{buildroot}%{_libdir}/%{name}/krb5/async_dns_krb5_locator.so
 chrpath -d %{buildroot}%{python3_sitearch}/%{name}/*.so*
 chrpath -d %{buildroot}%{python3_sitearch}/%{name}/samba3/*.so*
 chrpath -d %{buildroot}%{python3_sitearch}/%{name}/dcerpc/*.so*
@@ -765,6 +766,7 @@ chrpath -d %{buildroot}%{_bindir}/wbinfo
 chrpath -d %{buildroot}%{_bindir}/ntlm_auth
 chrpath -d %{buildroot}%{_bindir}/ltdbtool
 chrpath -d %{buildroot}%{_bindir}/ctdb
+chrpath -d %{buildroot}%{_bindir}/mdsearch
 
 chrpath -d %{buildroot}%{_sbindir}/eventlogadm
 chrpath -d %{buildroot}%{_sbindir}/smbd
@@ -772,6 +774,8 @@ chrpath -d %{buildroot}%{_sbindir}/nmbd
 chrpath -d %{buildroot}%{_sbindir}/winbindd
 chrpath -d %{buildroot}%{_sbindir}/samba
 chrpath -d %{buildroot}%{_sbindir}/ctdbd
+
+chrpath -d %{buildroot}%{_libexecdir}/%{name}/samba-bgqd
 
 mkdir -p %{buildroot}/etc/ld.so.conf.d
 echo "%{_libdir}/%{name}" > %{buildroot}/etc/ld.so.conf.d/%{name}-%{_arch}.conf
@@ -3386,6 +3390,12 @@ fi
 %endif
 
 %changelog
+* Fri Mar 11 2022 xingwei <xingwei14@h-partners.com> - 4.15.3-4
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:remove runpath of samba's binary files
+
 * Tue Feb 15 2022 gaihuiying <eaglegai@163.com> - 4.15.3-3
 - Type:cves
 - ID:CVE-2022-0336 CVE-2021-44142
