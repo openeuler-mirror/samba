@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        4
+Release:        5
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -73,6 +73,7 @@ Patch3:         backport-0004-CVE-2021-44142.patch
 Patch4:         backport-0005-CVE-2021-44142.patch
 Patch5:         backport-0001-CVE-2022-0336.patch
 Patch6:         backport-0002-CVE-2022-0336.patch
+Patch7:         backport-CVE-2021-44141.patch
 
 BuildRequires: avahi-devel bison dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -3390,6 +3391,12 @@ fi
 %endif
 
 %changelog
+* Thu Jul 14 2022 gaihuiying <eaglegai@163.com> - 4.15.3-5
+- Type:cves
+- ID:CVE-2021-44141
+- SUG:NA
+- DESC:fix CVE-2021-44141
+
 * Fri Mar 11 2022 xingwei <xingwei14@h-partners.com> - 4.15.3-4
 - Type:bugfix
 - ID:NA
