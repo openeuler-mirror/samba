@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        5
+Release:        6
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -658,6 +658,9 @@ install -d -m 0755 %{buildroot}%{_sysconfdir}/logrotate.d
 install -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/logrotate.d/samba
 
 install -m 0644 %{SOURCE4} %{buildroot}%{_sysconfdir}/samba/smb.conf
+%if %{!?openEuler:1}0
+sed  -i -e '/printing = cups/d' -e '/printcap name = cups/d' -e '/load printers = yes/d' -e '/cups options = raw/d' %{buildroot}%{_sysconfdir}/samba/smb.conf
+%endif
 install -m 0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/samba/smb.conf.example
 
 install -d -m 0755 %{buildroot}%{_sysconfdir}/security
@@ -3391,6 +3394,12 @@ fi
 %endif
 
 %changelog
+* Wed Jul 20 2022 gaihuiying <eaglegai@163.com> - 4.15.3-6
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:add macros to control if need cups in configure file
+
 * Thu Jul 14 2022 gaihuiying <eaglegai@163.com> - 4.15.3-5
 - Type:cves
 - ID:CVE-2021-44141
