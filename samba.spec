@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        6
+Release:        7
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -74,6 +74,10 @@ Patch4:         backport-0005-CVE-2021-44142.patch
 Patch5:         backport-0001-CVE-2022-0336.patch
 Patch6:         backport-0002-CVE-2022-0336.patch
 Patch7:         backport-CVE-2021-44141.patch
+Patch8:         backport-CVE-2022-32746.patch
+Patch9:         backport-CVE-2022-32745.patch
+Patch10:        backport-CVE-2022-2031-CVE-2022-32744.patch
+Patch11:        backport-CVE-2022-32742.patch
 
 BuildRequires: avahi-devel bison dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -2267,6 +2271,7 @@ fi
 %{python3_sitearch}/samba/tests/krb5/__pycache__/kdc_base_test.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/kdc_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/kdc_tgs_tests.*.pyc
+%{python3_sitearch}/samba/tests/krb5/__pycache__/kpasswd_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/ms_kile_client_principal_lookup_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/raw_testcase.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/rfc4120_constants.*.pyc
@@ -2292,6 +2297,7 @@ fi
 %{python3_sitearch}/samba/tests/krb5/kdc_base_test.py
 %{python3_sitearch}/samba/tests/krb5/kdc_tests.py
 %{python3_sitearch}/samba/tests/krb5/kdc_tgs_tests.py
+%{python3_sitearch}/samba/tests/krb5/kpasswd_tests.py
 %{python3_sitearch}/samba/tests/krb5/ms_kile_client_principal_lookup_tests.py
 %{python3_sitearch}/samba/tests/krb5/raw_testcase.py
 %{python3_sitearch}/samba/tests/krb5/rfc4120_constants.py
@@ -3394,6 +3400,12 @@ fi
 %endif
 
 %changelog
+* Tue Aug 02 2022 xinghe <xinghe2@h-partners.com> - 4.15.3-7
+- Type:cves
+- ID:CVE-2022-32746 CVE-2022-2031 CVE-2022-32744 CVE-2022-32742 CVE-2022-32745
+- SUG:NA
+- DESC:fix CVE-2022-32746 CVE-2022-2031 CVE-2022-32744 CVE-2022-32742 CVE-2022-32745
+
 * Wed Jul 20 2022 gaihuiying <eaglegai@163.com> - 4.15.3-6
 - Type:bugfix
 - ID:NA
