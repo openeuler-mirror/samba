@@ -6,7 +6,7 @@
 %global talloc_version 2.3.3
 %global tdb_version 1.4.4
 %global tevent_version 0.11.0
-%global ldb_version 2.4.1
+%global ldb_version 2.4.1-2
 
 %undefine _strict_symbol_defs_build
 
@@ -49,7 +49,7 @@
 
 Name:           samba
 Version:        4.15.3
-Release:        7
+Release:        8
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -185,6 +185,7 @@ Obsoletes: samba-dc-libs < %{samba_depver}
 Obsoletes: samba-dc-bind-dlz < %{samba_depver}
 %endif
 
+Requires: libldb >= %{ldb_version}
 Requires: %{name}-client = %{samba_depver}
 %if %with_libwbclient
 Requires: libwbclient = %{samba_depver}
@@ -3400,6 +3401,12 @@ fi
 %endif
 
 %changelog
+* Fri Aug 12 2022 xinghe <xinghe2@h-partners.com> - 4.15.3-8
+- Type:bugfix
+- ID:NA
+- SUG:NA
+- DESC:add ldb require version
+
 * Tue Aug 02 2022 xinghe <xinghe2@h-partners.com> - 4.15.3-7
 - Type:cves
 - ID:CVE-2022-32746 CVE-2022-2031 CVE-2022-32744 CVE-2022-32742 CVE-2022-32745
