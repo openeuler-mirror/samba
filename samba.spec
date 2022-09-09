@@ -3,10 +3,10 @@
 
 %define samba_requires_eq()  %(LC_ALL="C" echo '%*' | xargs -r rpm -q --qf 'Requires: %%{name} = %%{epoch}:%%{version
 }\\n' | sed -e 's/ (none):/ /' -e 's/ 0:/ /' | grep -v "is not")
-%global talloc_version 2.3.3
-%global tdb_version 1.4.4
-%global tevent_version 0.11.0
-%global ldb_version 2.4.1-2
+%global talloc_version 2.3.4
+%global tdb_version 1.4.7
+%global tevent_version 0.13.0
+%global ldb_version 2.5.2
 
 %undefine _strict_symbol_defs_build
 
@@ -48,8 +48,8 @@
 %global samba_depver %{version}-%{release}
 
 Name:           samba
-Version:        4.15.3
-Release:        8
+Version:        4.16.4
+Release:        1
 
 Summary:        A suite for Linux to interoperate with Windows
 License:        GPLv3+ and LGPLv3+
@@ -65,19 +65,6 @@ Source6:        pam_winbind.conf
 Source7:        samba.pamd
 
 Source201:      README.downgrade
-
-Patch0:         backport-0001-CVE-2021-44142.patch
-Patch1:         backport-0002-CVE-2021-44142.patch
-Patch2:         backport-0003-CVE-2021-44142.patch
-Patch3:         backport-0004-CVE-2021-44142.patch
-Patch4:         backport-0005-CVE-2021-44142.patch
-Patch5:         backport-0001-CVE-2022-0336.patch
-Patch6:         backport-0002-CVE-2022-0336.patch
-Patch7:         backport-CVE-2021-44141.patch
-Patch8:         backport-CVE-2022-32746.patch
-Patch9:         backport-CVE-2022-32745.patch
-Patch10:        backport-CVE-2022-2031-CVE-2022-32744.patch
-Patch11:        backport-CVE-2022-32742.patch
 
 BuildRequires: avahi-devel bison dbus-devel docbook-style-xsl e2fsprogs-devel flex gawk gnupg2 gnutls-devel >= 3.4.7 gpgme-devel
 BuildRequires: jansson-devel krb5-devel >= %{required_mit_krb5} libacl-devel libaio-devel libarchive-devel libattr-devel 
@@ -562,7 +549,9 @@ zcat %{SOURCE0} | gpgv2 --quiet --keyring %{SOURCE2} %{SOURCE1} -
 
 export python_LDFLAGS="$(echo %{__global_ldflags} | sed -e 's/-Wl,-z,defs//g')"
 
+%ifnarch riscv64
 export LDFLAGS="%{__global_ldflags} -fuse-ld=gold"
+%endif
 
 
 %configure \
@@ -616,7 +605,11 @@ export LDFLAGS="%{__global_ldflags} -fuse-ld=gold"
         --systemd-winbind-extra=%{_systemd_extra} \
         --systemd-samba-extra=%{_systemd_extra}
 
+%ifarch riscv64
+make -O V=1 VERBOSE=1
+%else
 %make_build
+%endif
 
 pushd pidl
 %__perl Makefile.PL PREFIX=%{_prefix}
@@ -1149,7 +1142,16 @@ fi
 %{_libdir}/samba/vfs/widelinks.so
 %{_libdir}/samba/vfs/worm.so
 %{_libdir}/samba/vfs/xattr_tdb.so
+%{_libexecdir}/samba/rpcd_classic
+%{_libexecdir}/samba/rpcd_epmapper
+%{_libexecdir}/samba/rpcd_fsrvp
+%{_libexecdir}/samba/rpcd_lsad
+%{_libexecdir}/samba/rpcd_mdssvc
+%{_libexecdir}/samba/rpcd_rpcecho
+%{_libexecdir}/samba/rpcd_spoolss
+%{_libexecdir}/samba/rpcd_winreg
 %{_libexecdir}/samba/samba-bgqd
+%{_libexecdir}/samba/samba-dcerpcd
 %dir %{_datadir}/samba
 %dir %{_datadir}/samba/mdssvc
 %{_datadir}/samba/mdssvc/elasticsearch_mappings.json
@@ -1168,6 +1170,9 @@ fi
 %{_libdir}/libdcerpc-server-core.so.*
 
 %{_libdir}/samba/libLIBWBCLIENT-OLD-samba4.so
+%{_libdir}/samba/libREG-FULL-samba4.so
+%{_libdir}/samba/libRPC-SERVER-LOOP-samba4.so
+%{_libdir}/samba/libRPC-WORKER-samba4.so
 %{_libdir}/samba/libauth4-samba4.so
 %{_libdir}/samba/libauth-unix-token-samba4.so
 %{_libdir}/samba/libdcerpc-samba4.so
@@ -1308,7 +1313,6 @@ fi
 
 %if ! %with_libwbclient
 %{_libdir}/samba/libwbclient.so.*
-%{_libdir}/samba/libwinbind-client-samba4.so
 #endif ! with_libwbclient
 %endif
 
@@ -1460,6 +1464,7 @@ fi
 %{_libdir}/samba/bind9/dlz_bind9_12.so
 %{_libdir}/samba/bind9/dlz_bind9_14.so            
 %{_libdir}/samba/bind9/dlz_bind9_16.so
+%{_libdir}/samba/bind9/dlz_bind9_18.so
 %config(noreplace) /etc/ld.so.conf.d/*
 #endif with_dc
 %endif
@@ -1624,7 +1629,6 @@ fi
 %if %with_libwbclient
 %files -n libwbclient
 %{_libdir}/samba/wbclient/libwbclient.so.*
-%{_libdir}/samba/libwinbind-client-samba4.so
 %config(noreplace) /etc/ld.so.conf.d/*
 
 %files -n libwbclient-devel
@@ -1687,7 +1691,11 @@ fi
 %{python3_sitearch}/samba/__pycache__/drs_utils.*.pyc
 %{python3_sitearch}/samba/__pycache__/getopt.*.pyc
 %{python3_sitearch}/samba/__pycache__/gpclass.*.pyc
+%{python3_sitearch}/samba/__pycache__/gp_cert_auto_enroll_ext.*.pyc
+%{python3_sitearch}/samba/__pycache__/gp_chromium_ext.*.pyc
 %{python3_sitearch}/samba/__pycache__/gp_ext_loader.*.pyc
+%{python3_sitearch}/samba/__pycache__/gp_firefox_ext.*.pyc
+%{python3_sitearch}/samba/__pycache__/gp_firewalld_ext.*.pyc
 %{python3_sitearch}/samba/__pycache__/gp_gnome_settings_ext.*.pyc
 %{python3_sitearch}/samba/__pycache__/gp_msgs_ext.*.pyc
 %{python3_sitearch}/samba/__pycache__/gp_scripts_ext.*.pyc
@@ -1729,6 +1737,10 @@ fi
 %{python3_sitearch}/samba/common.py
 %{python3_sitearch}/samba/credentials.*.so
 %{python3_sitearch}/samba/crypto.*.so
+%{python3_sitearch}/samba/gp_cert_auto_enroll_ext.py
+%{python3_sitearch}/samba/gp_chromium_ext.py
+%{python3_sitearch}/samba/gp_firefox_ext.py
+%{python3_sitearch}/samba/gp_firewalld_ext.py
 %dir %{python3_sitearch}/samba/dcerpc
 %dir %{python3_sitearch}/samba/dcerpc/__pycache__
 %{python3_sitearch}/samba/dcerpc/__pycache__/__init__.*.pyc
@@ -2104,6 +2116,7 @@ fi
 %{python3_sitearch}/samba/tests/__pycache__/smbd_base.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/smbd_fuzztest.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/source.*.pyc
+%{python3_sitearch}/samba/tests/__pycache__/source_chars.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/strings.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/subunitrun.*.pyc
 %{python3_sitearch}/samba/tests/__pycache__/tdb_util.*.pyc
@@ -2274,6 +2287,7 @@ fi
 %{python3_sitearch}/samba/tests/krb5/__pycache__/kdc_tgs_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/kpasswd_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/ms_kile_client_principal_lookup_tests.*.pyc
+%{python3_sitearch}/samba/tests/krb5/__pycache__/pac_align_tests.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/raw_testcase.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/rfc4120_constants.*.pyc
 %{python3_sitearch}/samba/tests/krb5/__pycache__/rfc4120_pyasn1.*.pyc
@@ -2300,6 +2314,7 @@ fi
 %{python3_sitearch}/samba/tests/krb5/kdc_tgs_tests.py
 %{python3_sitearch}/samba/tests/krb5/kpasswd_tests.py
 %{python3_sitearch}/samba/tests/krb5/ms_kile_client_principal_lookup_tests.py
+%{python3_sitearch}/samba/tests/krb5/pac_align_tests.py
 %{python3_sitearch}/samba/tests/krb5/raw_testcase.py
 %{python3_sitearch}/samba/tests/krb5/rfc4120_constants.py
 %{python3_sitearch}/samba/tests/krb5/rfc4120_pyasn1.py
@@ -2382,6 +2397,7 @@ fi
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/help.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/join.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/join_lmdb_size.*.pyc
+%{python3_sitearch}/samba/tests/samba_tool/__pycache__/join_member.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/ntacl.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/ou.*.pyc
 %{python3_sitearch}/samba/tests/samba_tool/__pycache__/passwordsettings.*.pyc
@@ -2418,6 +2434,7 @@ fi
 %{python3_sitearch}/samba/tests/samba_tool/help.py
 %{python3_sitearch}/samba/tests/samba_tool/join.py
 %{python3_sitearch}/samba/tests/samba_tool/join_lmdb_size.py
+%{python3_sitearch}/samba/tests/samba_tool/join_member.py
 %{python3_sitearch}/samba/tests/samba_tool/ntacl.py
 %{python3_sitearch}/samba/tests/samba_tool/ou.py
 %{python3_sitearch}/samba/tests/samba_tool/passwordsettings.py
@@ -2449,6 +2466,7 @@ fi
 %{python3_sitearch}/samba/tests/smbd_base.py
 %{python3_sitearch}/samba/tests/smbd_fuzztest.py
 %{python3_sitearch}/samba/tests/source.py
+%{python3_sitearch}/samba/tests/source_chars.py
 %{python3_sitearch}/samba/tests/strings.py
 %{python3_sitearch}/samba/tests/subunitrun.py
 %{python3_sitearch}/samba/tests/tdb_util.py
@@ -3401,6 +3419,11 @@ fi
 %endif
 
 %changelog
+* Thu Sep 8 2022 YukariChiba <i@0x7f.cc> - 4.16.4-1
+- Do not use gold when building on RISC-V
+- Disable smpflag in make to keep active in building on RISC-V
+- Upgrade version to 4.16.4
+
 * Fri Aug 12 2022 xinghe <xinghe2@h-partners.com> - 4.15.3-8
 - Type:bugfix
 - ID:NA
